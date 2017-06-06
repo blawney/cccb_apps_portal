@@ -1,0 +1,43 @@
+{% extends "analysis_portal/base.html" %}
+{% load static %}
+{% block content %}
+<div class="container">
+        <div class="row">
+                <div id="go-back" class="col-md-6">
+                        <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+                        <a href="/analysis/annotate-files/{{project_pk}}">Back</a>
+                </div>
+        </div>
+   <div class="row">
+        <div id="summary-panel" class="panel panel-default">
+            <div class="panel-heading">
+                <h4>Pre-analysis summary</h4>
+            </div>
+            <table id="pre-analysis-summary-table" class="table table-striped">
+                <thead>
+                    <tr>
+                    <th>Sample</th>
+                    <th>Notes</th>
+                    <th>Files</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sample, files in mapping.iteritems %}
+                    <tr>
+                        <td>{{sample.name}}</td>
+                        <td>{{sample.metadata}}</td>
+			<td>{{ files }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+	<input id="pk-field" type="hidden" value="{{project_pk}}">
+	<button id="start-analysis" class="btn btn-primary">Analyze!</button>
+    </div>
+</div>
+{% endblock %}
+{% block page_specific_script %}
+        <script src="{% static "js/summary.js" %}"></script>
+{% endblock %}

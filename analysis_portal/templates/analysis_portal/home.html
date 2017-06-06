@@ -1,0 +1,54 @@
+{% extends "analysis_portal/base.html" %}
+{% load static %}
+{% block content %}
+            <div class="container">
+                <div class="row">
+                        {% if projects %}
+			<div id="project-panel" class="panel panel-default">
+			<div class="panel-heading">
+	                        <h4>Select a project</h4>
+			</div>
+                        <table id="all-projects-table" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Completed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in projects %}
+                                <tr>
+                                    <td>{{p.name}}</td>
+                                    <td>{{p.service}}</td>
+                                    <td>
+                                        {% if p.completed %}
+                                        <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span>
+                                        {% elif p.in_progress %}
+                                        <span class="glyphicon glyphicon-time" aria-hidden="true"></span>
+                                        {% else %}
+                                        <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if p.completed %} 
+                                        <span>{{p.finish_time}}</span>
+                                        {% else %}
+                                        <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+					<a href="/analysis/genome-choice/{{p.pk}}">
+                                        <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+					</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+			</div>
+                        {% endif %}
+                </div>
+			</div>
+{% endblock %}

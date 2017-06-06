@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+	<head>
+        <style>
+                body{
+                    font-family: helvetica, sans-serif;
+                }
+                .main-div{
+                    width: 600px;
+                    margin: 0 auto;
+                }
+                label{
+                    display: inline-block;
+                    width: 200px;
+                }
+                input[type=text], input[type=email]{
+                    width: 350px;
+                }
+                input:focus{
+                    box-shadow: 0 0 5px rgba(81, 203, 238, 1);
+                }
+                input[type=submit]{
+                    height:3em;
+                }
+                ul{
+                    list-style: none;
+                    padding: 0;
+                }
+                .success{
+                    padding: 10px;
+                    background-color:#dff0d8;
+                    margin: 10px 0;
+                    border-radius:10px;
+                    color: grey;
+                }
+        </style>
+	</head>
+	<body>
+		<div class="main-div">
+			<h1>Enter client information:</h1>
+			<form action="/cccb-admin/client-setup" method="post">
+				{% csrf_token %}
+				{{ client_form.as_p }}
+				{{ service_form.as_p }}
+				<p>
+				<label for="service_selector" >CCCB Service</label>
+				<select id="service_selector" name="service_select">
+					{% for service in services %}
+						<option value="{{ service.name }}">{{ service.name }}</option>
+					{% endfor %}
+				</select>
+				</p>
+				<input type="submit" value="Submit" />
+			</form>
+			{% if message %}
+			<p class="success">
+				{{message}}
+			</p>
+			{% endif %}
+		</div>
+	</body>
+</html>

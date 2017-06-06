@@ -1,0 +1,125 @@
+{% extends "analysis_portal/base.html" %}
+{% load static %}
+{% block content %}
+<div id="main-container" class="container">
+	<div class="row">
+		<div class="col-md-6">
+			<span id="project-title" class="project-title">{{project_name}}</span>
+			<input id="project-title-input">
+			<input id="pk-field" type="hidden" value="{{project_pk}}">
+		</div>
+	</div>
+	<div class="row">
+		<div id="go-back" class="col-md-6">
+			<span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+			<a href="/analysis/upload/{{project_pk}}">Back</a>
+		</div>
+	</div>
+	{% if no_uploaded_files %}
+		<div class="panel panel-danger">
+			<div class="panel-heading">
+				<h3 class="panel-title">No files were uploaded!</h3>
+			</div>
+			<div class="panel-body">
+				<p>Go <a href="/analysis/upload/{{project_pk}}/">back</a> to upload files</p>
+			</div>
+		</div>
+	{% else %}
+	<div class="row">
+		<div class="col-md-7">
+			<div id="add-sample-panel" class="panel panel-default">     
+				<div class="panel-heading">
+					<h4>Samples</h4>
+				</div>
+				<div id="add-sample-panel-inner" class="panel-wrapper-div">
+					<span id="add-new-sample-button" class="glyphicon glyphicon-plus" aria-hidden="true"></span>Add new sample
+					{% for samplename, filelist in assigned_files.iteritems %}
+						<div class="sample-box" samplename="{{samplename}}">
+							<div class="rp-div">
+								<div class="rm-sample">x</div>
+								<div class="background-name">{{samplename}}
+								</div>
+								{% for file in filelist %}
+								<p id="{{file.file_string}}-tag" class="sample-display" filename="{{file.file_string}}" draggable="true">
+									<span class="file-tag">{{file.file_string}}</span>
+								</p>
+								{% endfor %}
+							</div>
+						</div>
+					{% endfor %}
+				</div>
+			</div>
+                </div>
+		<div class="col-md-5">
+			<div class="row">
+				<div class="col-md-12">
+					<div id="existing-files-panel" class="panel panel-default">
+						<div class="panel-heading">
+							<h4>Uploaded files</h4>
+						</div>
+						<div class="panel-wrapper-div">
+							<div id="existing-files-wrapper">
+							{% for file in unassigned_files %}
+								<p id="{{file.file_string}}-tag" class="sample-display" filename="{{file.file_string}}" draggable="true">
+									<span class="file-tag">{{file.file_string}}</span>
+								</p>
+							{% endfor %}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-12">
+					<div id="proceed-to-summary-panel" class="panel panel-default">
+						<div class="panel-heading">
+							<h4>Proceed to summary</h4>
+						</div>
+						<div class="panel-wrapper-div">
+							<button id="go-to-summary-btn" class="btn btn-primary">Next <span id="add-new-sample-button" class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span></button>
+						</div>
+						
+					</div>
+				</div>
+			</div>
+                        <div class="row">
+                                <div class="col-md-12">
+                                        <div id="instructions-panel" class="panel panel-default">
+                                                <div class="panel-heading">
+                                                        <h4>Instructions</h4>
+                                                </div>
+                                                <div class="panel-wrapper-div">
+							Assign your samples to files here.
+							<ul>
+								<li>Create a new sample</li>
+								<ul>
+									<li>Name it something meaningful (and unique!)</li>
+									<li>Specify any additional information (for personal use)</li>
+								</ul>
+								<li>Drag/drop the unassigned file tags to the samples</li>
+								<li>Once all the files have been assigned to samples, click "Next"</li>
+							</ul>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+	</div>
+</div>
+<div id="sample-entry-box">
+	<p>Enter sample information:</p>
+	<div class="form-group">
+		<label for="sample-entry-input">Sample name</label>
+		<input type="text" class="form-control" id="sample-entry-input" placeholder="Sample name">
+		<label for="sample-meta-input">Sample info (optional)</label>
+		<textarea type="textfield" class="form-control" id="sample-meta-input" rows="3" placeholder="Additional notes"></textarea>
+	</div>
+	<button id="cancel-sample-dialog-btn" class="btn btn-primary pull-right">Cancel</button>
+	<button id="add-sample-dialog-btn" class="btn btn-primary pull-right">Add</button>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block page_specific_script %}
+	<script src="{% static "js/annotate.js" %}"></script>
+{% endblock %}

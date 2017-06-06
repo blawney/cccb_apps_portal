@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+
+{% load static from staticfiles %}
+<html>
+  <head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="">
+	<meta name="author" content="">
+
+	<!-- Bootstrap Core CSS -->
+	<link href="{% static "bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+
+	<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+	<link href="{% static "css/ie10-viewport-bug-workaround.css" %}" rel="stylesheet">
+
+	<script src="{% static "bootstrap/js/jquery.js" %}"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="{% static "bootstrap/js/bootstrap.min.js" %}"></script>
+
+	<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+	<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+	<!--[if lt IE 9]>
+	<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+	<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+	<![endif]-->
+
+    <title>{% block head_title %}CCCB Analysis Portal{% endblock %}</title>
+    {% block extra_head %}
+    {% endblock %}
+  </head>
+  {% block body_content %}
+  {% endblock %}
+	<script src="{% static "js/common.js" %}"></script>
+
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="{% static "bootstrap/js/ie10-viewport-bug-workaround.js" %}"></script>
+    {% block page_specific_script %}
+    {% endblock %}
+</html>

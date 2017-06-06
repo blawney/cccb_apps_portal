@@ -1,0 +1,32 @@
+{% extends "analysis_portal/base.html" %}
+{% load static %}
+{% block content %}
+<div id="main-container" class="container">
+	<div class="row">
+		<div class="col-md-6">
+			<span id="project-title" class="project-title">{{project_name}}</span>
+		</div>
+	</div>
+        <div class="row">
+                <div id="go-back" class="col-md-6">
+                        <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+                        <a href="/analysis/home/">Back</a>
+                </div>
+        </div>
+	<div class="row">
+		<div class="col-md-8 col-md-offset-2">
+			<div id="choose-genome-panel" class="panel panel-default">     
+				<div class="panel-heading">
+					<h4>In progress...</h4>
+				</div>
+				<div class="panel-wrapper-div">
+					<p>{{time_str}}</p>
+				</div>
+			</div>
+                </div>
+	</div>
+</div>
+{% endblock %}
+
+{% block page_specific_script %}
+{% endblock %}
