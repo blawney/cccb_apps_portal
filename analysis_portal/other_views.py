@@ -72,4 +72,6 @@ def notify(request):
             print ex
             print ex.message
             return HttpResponseBadRequest('')
-
+    else:
+        print 'was not an internal rquest'
+        return HttpResponseBadRequest('')

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import datetime
 import json
 import os
+import re
 
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
@@ -140,6 +141,21 @@ def add_new_file(request, project_pk):
         else:
             new_ds = DataSource(project=project, source_type = 'fastq', filepath=newfile)
             new_ds.save()
+
+            # create a sample by parsing the filename
+            basename = os.path.basename(newfile)
+            match = re.search(settings.FASTQ_GZ_PATTERN, basename).group(0)
+            samplename = basename[:-len(match)]
+            if Sample.objects.filter(project=project, name=samplename).exists():
+                s = Sample.objects.get(project=project, name=samplename)
+            else:
+                s = Sample(name=samplename, metadata='', project=project)
+                s.save()
+
+            # add the datasource to the sample
+            new_ds.sample = s
+            new_ds.save()
+
             return HttpResponse('')
     else:
 		return HttpResponseBadRequest('')
