@@ -58,7 +58,7 @@ def plot_read_composition(log_data, targets, filename, colors):
 	ax.set_title("Read Composition")
 	fig.savefig(filename, bbox_inches='tight')
 	logging.info('Saved read composition plot to %s' % filename)
-
+	plt.close()
 
 
 def plot_total_read_count(log_data, filename):
@@ -90,3 +90,4 @@ def plot_total_read_count(log_data, filename):
 	plt.rc("font", **font)
 	ax.set_title('Total Input Reads')
 	fig.savefig(filename, bbox_inches='tight')
+	plt.close()

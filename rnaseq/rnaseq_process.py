@@ -354,15 +354,13 @@ def make_qc_report(logfile_objs, local_dir):
     args = [compile_script, local_dir, 'report']
     p = subprocess.Popen(args, stdout = subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
-    logging.info('STDOUT from latex compile script: ')
-    logging.info(stdout)
-    logging.info('STDERR from latex compile script: ')
-    logging.info(stderr)
+    print 'STDOUT from latex compile script: %s' % stdout
+    print 'STDERR from latex compile script: %s' % stderr
     if p.returncode != 0:
-        logging.error('Error running the compile script for the latex report.')
+        print 'Error running the compile script for the latex report.'
         raise Exception('Error running the compile script for the latex report.')
         # the compiled report is simply the project name with the '.pdf' suffix
-    pdf_report_path = os.path.join(local_dir + 'report.pdf')
+    pdf_report_path = os.path.join(local_dir, 'report.pdf')
     return pdf_report_path
 
 def finish(project):
@@ -402,6 +400,7 @@ def finish(project):
         r.save()
 
         set_meta_cmd = 'gsutil setmeta -h "Content-Disposition: attachment; filename=%s" gs://%s/%s' % (os.path.basename(b.name), bucket_name, b.name)
+        print 'set meta cmd: %s' % set_meta_cmd
         process = subprocess.Popen(set_meta_cmd, shell = True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
         stdout, stderr = process.communicate()
         if process.returncode != 0:
