@@ -42,6 +42,8 @@ def setup_client(request):
 				try:
 					service = request.POST.get('service_select')
 					svc = service_dict[service]
+
+					ilab_id = request.POST.get('ilab_id')
 				except KeyError:
 					return HttpResponseBadRequest('')
 
@@ -65,6 +67,7 @@ def setup_client(request):
 
 				# create a Project, add client and bucket
 				project = Project.objects.create_project(user, svc, bucket_name)
+				project.ilab_id = ilab_id
 				project.save()
 
 				# TODO send email

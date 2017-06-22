@@ -515,7 +515,9 @@ def handle(project, request):
     if all([s.processed for s in all_samples]):
         print 'All samples have completed!'
         project.in_progress = False
-        project.completed = True
-        project.finish_time = datetime.datetime.now()
+        project.paused_for_user_input = True
+        project.completed = False
+        project.status_message = 'Completed alignments.'
+        #project.finish_time = datetime.datetime.now()
         project.save()
         finish(project)

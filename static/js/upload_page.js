@@ -65,9 +65,19 @@ function trackFile(file){
 }
 
 function traverseFiles(files){
+    console.log(files);
     if (typeof files !== "undefined"){
         for(var i=0; i<files.length; i++){
-            trackFile(files[i]);
+	    var f = files[i].name;
+	    var match = f.replace(/.*_r[1,2].f.*.gz/i, '');
+	    console.log(match);
+	    console.log(f);
+	    if(match == ''){
+            	trackFile(files[i]);
+	    }else{
+  	        alert('Your file was not named correctly.');
+	    }
+	    
         }
     }
     else{

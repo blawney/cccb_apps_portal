@@ -43,6 +43,10 @@
 				{{ client_form.as_p }}
 				{{ service_form.as_p }}
 				<p>
+				<label for="ilab_field">iLab ID</label>
+				<input type="text"/ name="ilab_id">
+				</p>
+				<p>
 				<label for="service_selector" >CCCB Service</label>
 				<select id="service_selector" name="service_select">
 					{% for service in services %}

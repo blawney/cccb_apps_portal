@@ -10,8 +10,8 @@ class ServiceAdmin(admin.ModelAdmin):
 	list_editable = ('description', 'application_url')
 
 class ProjectAdmin(admin.ModelAdmin):
-	list_display = ('name', 'owner','service', 'bucket', 'completed','in_progress', 'start_time', 'finish_time', 'reference_organism')
-	list_editable = ('service', 'completed','in_progress', 'start_time', 'finish_time', 'reference_organism')
+	list_display = ('name', 'owner','service', 'bucket', 'completed','in_progress', 'paused_for_user_input', 'start_time', 'finish_time', 'reference_organism', 'ilab_id')
+	list_editable = ('service', 'completed','in_progress', 'paused_for_user_input', 'start_time', 'finish_time', 'reference_organism', 'ilab_id')
 
 class SampleAdmin(admin.ModelAdmin):
 	list_display = ('name','project','processed')

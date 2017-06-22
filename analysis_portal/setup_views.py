@@ -5,7 +5,7 @@ import json
 import os
 import re
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
@@ -21,12 +21,13 @@ class ProjectDisplay(object):
 	"""
 	A simple container class used when displaying the project in the UI
 	"""
-	def __init__(self, pk, name, service, completed, in_progress, finish_time):
+	def __init__(self, pk, name, service, completed, in_progress, finish_time, status_message):
 		self.pk = pk
 		self.name = name
 		self.service = service
 		self.completed = completed
 		self.in_progress = in_progress
+		self.status_message = status_message
 		if finish_time:
 			self.finish_time = finish_time.strftime('%b %d, %Y (%H:%M)')
 		else:
@@ -88,7 +89,7 @@ def home_view(request):
 	# format the time
 	projects = []
 	for p in users_projects:
-		projects.append(ProjectDisplay(p.pk, p.name, p.service.name, p.completed, p.in_progress, p.finish_time))
+		projects.append(ProjectDisplay(p.pk, p.name, p.service.name, p.completed, p.in_progress, p.finish_time, p.status_message))
 
 	context['projects'] = projects
 	return render(request, 'analysis_portal/home.html', context)
@@ -146,7 +147,8 @@ def add_new_file(request, project_pk):
             basename = os.path.basename(newfile)
             match = re.search(settings.FASTQ_GZ_PATTERN, basename).group(0)
             samplename = basename[:-len(match)]
-            if Sample.objects.filter(project=project, name=samplename).exists():
+            project_samples = project.sample_set.all()
+            if any([s.name==samplename for s in project_samples]):
                 s = Sample.objects.get(project=project, name=samplename)
             else:
                 s = Sample(name=samplename, metadata='', project=project)
@@ -251,8 +253,13 @@ def map_files_to_samples(request, project_pk):
 	project = helpers.check_ownership(project_pk, request.user)
 	if project is not None:
 		j = json.loads(request.POST.get('mapping'))
+		print 'received %s' % j
+		all_samples = project.sample_set.all()
+		print all_samples
 		for sample, files in j.items():
+			print 'try sample %s, files: %s' % (sample, files)
 			sample_obj = project.sample_set.get(name=sample)
+			print sample_obj
 			for f in files:
 				f = os.path.join(settings.UPLOAD_PREFIX,f)
 				ds = DataSource.objects.get(filepath=f, project=project)
@@ -293,7 +300,8 @@ def kickoff(request, project_pk):
 			rnaseq_process.start_analysis(pk)
 			project.in_progress = True
 			project.start_time = datetime.datetime.now()
+			project.status_message = 'Performing alignments'
 			project.save()
 		else:
 			print 'Could not figure out project type'
-		return HttpResponseRedirect('/')
+		return redirect('analysis_home_view')

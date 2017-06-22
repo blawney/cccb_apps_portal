@@ -5,7 +5,7 @@ import setup_views
 import other_views
 
 urlpatterns = [
-    url(r'^home/', setup_views.home_view),
+    url(r'^home/', setup_views.home_view, name='analysis_home_view'),
     url(r'^upload/(?P<project_pk>[0-9]+)/$', setup_views.upload_page),
     url(r'^edit-name/(?P<project_pk>[0-9]+)/$', setup_views.change_project_name),
     url(r'^update-files/(?P<project_pk>[0-9]+)/$', setup_views.add_new_file),
