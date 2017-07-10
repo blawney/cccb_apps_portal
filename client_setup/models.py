@@ -46,10 +46,13 @@ class Project(models.Model):
 	start_time = models.DateTimeField(blank=True, null=True)
 	finish_time = models.DateTimeField(blank=True, null=True)
 	bucket = models.CharField(max_length=63) # default max length for a bucket is 63
+	next_action_text = models.CharField(max_length = 100, default='')
+	next_action_url = models.CharField(max_length = 255, default='')
+	has_downloads = models.BooleanField(default=False)
 	objects = ProjectManager()
 
 	def __str__(self):
-		return '%s (%s)' % (self.owner, self.service)
+		return '%s (%s, %s)' % (self.name, self.owner, self.service)
 
 
 class Sample(models.Model):
@@ -60,6 +63,9 @@ class Sample(models.Model):
 	metadata = models.TextField(blank=True, null=True) # for the user, not really for us.  Lets them enter additional info beyond the name
 	project = models.ForeignKey(Project)
 	processed = models.BooleanField(default=False)
+
+	class Meta:
+		unique_together = (('project','name'),)
 
 	def __str__(self):
 		return self.name

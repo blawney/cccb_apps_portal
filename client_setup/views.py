@@ -6,6 +6,7 @@ import string
 import json
 
 from django.shortcuts import render
+from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest 
 from django.contrib.auth.decorators import login_required
 from google.cloud import storage
@@ -68,7 +69,12 @@ def setup_client(request):
 				# create a Project, add client and bucket
 				project = Project.objects.create_project(user, svc, bucket_name)
 				project.ilab_id = ilab_id
+				project.next_action_text = 'Upload files'
 				project.save()
+
+				project.next_action_url = reverse('choose_genome', kwargs={'project_pk':project.pk})
+				project.save()
+
 
 				# TODO send email
 				if previously_existed:

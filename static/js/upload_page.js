@@ -69,15 +69,13 @@ function traverseFiles(files){
     if (typeof files !== "undefined"){
         for(var i=0; i<files.length; i++){
 	    var f = files[i].name;
-	    var match = f.replace(/.*_r[1,2].f.*.gz/i, '');
-	    console.log(match);
-	    console.log(f);
-	    if(match == ''){
+	    var fastq_match = f.replace(/.*_r[1,2].f.*.gz/i, '');
+	    var bam_match = f.replace(/.*.bam/i, '');
+	    if(fastq_match == '' | bam_match == ''){
             	trackFile(files[i]);
 	    }else{
-  	        alert('Your file was not named correctly.');
+  	        alert('Your file was not named correctly. Please see the instructions');
 	    }
-	    
         }
     }
     else{
@@ -414,3 +412,55 @@ var sample_icons = document.querySelectorAll(".rhs");
 for (var i = 0; i < sample_icons.length; i++) {
 	sample_icons[i].addEventListener("click", rm_file);
 }
+
+//Dropbox code:
+options = {
+    // Required. Called when a user selects an item in the Chooser.
+    success: function(files) {
+	var file_links = [];
+	for(var i=0; i<files.length; i++){
+		file_links.push(files[i].link);
+	}
+	console.log(file_links);
+	var csrftoken = getCookie('csrftoken');
+	xhr = new XMLHttpRequest();
+	var pkField = document.getElementById("pk-field").value;
+	xhr.open("POST", "/upload/dropbox-transfer/" + pkField + '/');
+	xhr.setRequestHeader("X-CSRFToken", csrftoken);
+	xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+	xhr.onreadystatechange = function() {
+        	if (xhr.readyState === 4) {
+        	        if (xhr.status === 200) {
+        	                console.log('successful');
+        	        } else {
+                	        console.log('failed');
+                	}
+        	}
+	}
+	var data = {};
+	data["transfer_files"] = file_links;
+	xhr.send("transfer_files=" + file_links);	
+	alert('Your data transfer has started.  We will send you an email when it has completed.  Simply refresh this page once you receive the email.');
+    },
+    // Optional. Called when the user closes the dialog without selecting a file
+    // and does not include any parameters.
+    cancel: function() {
+    },
+    // Optional. "preview" (default) is a preview link to the document for sharing,
+    // "direct" is an expiring link to download the contents of the file. For more
+    // information about link types, see Link types below.
+    linkType: "direct", // or "direct"
+    // Optional. A value of false (default) limits selection to a single file, while
+    // true enables multiple file selection.
+    multiselect: true, // or true
+    // Optional. This is a list of file extensions. If specified, the user will
+    // only be able to select files with these extensions. You may also specify
+    // file types, such as "video" or "images" in the list. For more information,
+    // see File types below. By default, all extensions are allowed.
+    //extensions: ['.pdf', '.doc', '.docx'],
+};
+
+var button = Dropbox.createChooseButton(options);
+button.setAttribute("id", "dropbox-chooser");
+var uploadOptionsPanel = document.querySelector("#add-sample-panel > .panel-wrapper-div");
+uploadOptionsPanel.insertAdjacentElement('afterbegin', button);

@@ -20,6 +20,7 @@ from client_setup.models import Project, Sample
 from download.models import Resource
 
 from django.conf import settings
+from django.urls import reverse
 
 import plot_methods
 
@@ -28,6 +29,7 @@ CALLBACK_URL = 'analysis/notify/'
 
 DEFAULT_FILTER_LEVELS = ['sort.primary',]
 RAW_COUNT_PREFIX = 'raw_counts'
+DGE_FOLDER = 'dge'
 STAR_LOG_SUFFIX = '.Log.final.out'
 MAPPING_COMPOSITION_PLOT = 'mapping_composition.pdf'
 TOTAL_READS_PLOT = 'total_reads.pdf'
@@ -81,7 +83,12 @@ def setup(project_pk, config_params):
         if ds.sample in all_samples:
             sample_mapping[(ds.sample.pk, ds.sample.name)].append(ds)
 
-    return project, result_bucket_name, sample_mapping
+    # just in case, remove any empty samples:
+    final_mapping = {}
+    for key, vals in sample_mapping.items():
+        if len(vals) > 0:
+            final_mapping[key] = vals
+    return project, result_bucket_name, final_mapping
 
 
 def get_internal_ip():
@@ -121,6 +128,8 @@ def launch_workers(compute, project, result_bucket_name, sample_mapping, config_
         # now add the other params to the dictionary:
         kwargs['result_bucket_name'] = config_params['gs_prefix'] + result_bucket_name
         kwargs['reference_genome'] = config_params['reference_genome']
+        kwargs['email_utils'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['email_utils'])
+        kwargs['email_credentials'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['email_credentials'])
         kwargs['sample_name'] = sample_tuple[1] 
         kwargs['genome_config_path'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['genome_config_file'])
         kwargs['align_script_template'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['align_script_template'])
@@ -128,6 +137,7 @@ def launch_workers(compute, project, result_bucket_name, sample_mapping, config_
         kwargs['sample_pk'] = sample_tuple[0]
         kwargs['callback_url'] = 'http://%s:8080/%s' % (get_internal_ip(), CALLBACK_URL)
         kwargs['startup_script'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['startup_script'])
+        kwargs['notification_email_addresses'] = config_params['notification_email_addresses']
 
         launch_custom_instance(compute, config_params['google_project'], config_params['default_zone'], 'worker-%s-%s' % (sample_tuple[1].lower(), datetime.datetime.now().strftime('%m%d%y%H%M%S')), kwargs, config_params)
 
@@ -145,6 +155,9 @@ def launch_custom_instance(compute, google_project, zone, instance_name, kwargs,
     cccb_project_pk = kwargs['project_pk']
     sample_pk = kwargs['sample_pk']
     callback_url = kwargs['callback_url']
+    email_utils = kwargs['email_utils']
+    email_credentials = kwargs['email_credentials']
+    notification_email_addresses = kwargs['notification_email_addresses']
 
     source_disk_image = 'projects/%s/global/images/%s' % (config_params['google_project'], config_params['image_name'])
 
@@ -238,6 +251,18 @@ def launch_custom_instance(compute, google_project, zone, instance_name, kwargs,
             {
                 'key':'callback_url',
                 'value': callback_url
+            },
+	    {
+              'key':'email_utils',
+              'value': email_utils
+            },
+	    {
+              'key':'email_credentials',
+              'value': email_credentials
+            },
+            {
+              'key':'notification_email_addresses',
+              'value':notification_email_addresses
             }
           ]
         }
@@ -261,8 +286,6 @@ def create_merged_counts(bucket, countfile_objs, local_dir):
     Downloads and concatenates the count files into a raw count matrix
     """
 
-    print 'merging count files'
-
     # download the files
     countfile_paths = []
     for cf in countfile_objs:
@@ -273,9 +296,7 @@ def create_merged_counts(bucket, countfile_objs, local_dir):
 
     # concatenate the different 'levels' of count file
     styles = ['.'.join(x.split('.')[1:-1]) for x in countfile_paths]
-    print styles
     df = pd.DataFrame({'files':countfile_paths, 'filetype':styles})
-    print 'df:\n %s' % df
     d = {}
     for grouping, f in df.groupby('filetype'):
         d[grouping] = sorted(f.files.tolist())
@@ -285,7 +306,6 @@ def create_merged_counts(bucket, countfile_objs, local_dir):
     for level in DEFAULT_FILTER_LEVELS:
         d2[level] = d[level]
 
-    print 'file mapping %s' % d2
     raw_count_files = []
     for k,files in d2.items():
         overall = pd.DataFrame()
@@ -297,9 +317,8 @@ def create_merged_counts(bucket, countfile_objs, local_dir):
             df = df.ix[:,-1]
             overall = pd.concat([overall, df], axis=1)
         overall.columns = cols
-        overall.to_csv(outfile, sep='\t', index_label='gene')
+        overall.to_csv(outfile, sep='\t', index_label='Gene')
         raw_count_files.append(outfile)
-    print 'raw count files: %s' % raw_count_files
     return raw_count_files
 
 def get_log_contents(f):
@@ -432,7 +451,15 @@ def finish(project):
             raise ex
     raw_count_filepaths = create_merged_counts(bucket, countfile_objs, local_dir)
 
-    # TODO make some plots? QC?
+    # upload count files for use when performing DGE analysis
+    for rc in raw_count_filepaths:
+        destination = os.path.join(config_params['output_bucket'], DGE_FOLDER, os.path.basename(rc))
+        rc_blob = bucket.blob(destination)
+        rc_blob.upload_from_filename(rc)
+
+
+
+    # make some plots/QC
     star_log_pattern = '.*%s$' % STAR_LOG_SUFFIX
     star_logs = [x for x in all_contents if re.match(star_log_pattern, x.name) is not None]
     report_pdf_path = make_qc_report(star_logs, local_dir)
@@ -451,6 +478,7 @@ def finish(project):
     if p.returncode != 0:
         #TODO: send email to cccb?  Shouldn't happen and not a user error.
         pass
+
     # upload the archive and give it permissions:
     destination = os.path.join(config_params['output_bucket'], os.path.basename(zipfile))
     zip_blob = bucket.blob(destination)
@@ -517,7 +545,9 @@ def handle(project, request):
         project.in_progress = False
         project.paused_for_user_input = True
         project.completed = False
-        project.status_message = 'Completed alignments.'
-        #project.finish_time = datetime.datetime.now()
+        project.status_message = 'Completed alignments'
+	project.next_action_text = 'Perform differential expression'
+	project.next_action_url = reverse('dge', kwargs={'project_pk':project.pk})
+	project.has_downloads = True
         project.save()
         finish(project)

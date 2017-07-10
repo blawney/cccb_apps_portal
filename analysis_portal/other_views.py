@@ -60,7 +60,7 @@ def notify(request):
         try:
             project = Project.objects.get(pk = project_pk)
             print 'found project %s' % project
-            if project.service.name == 'RNA-Seq':
+            if project.service.name == 'rnaseq':
                 print 'found rnaseq project'
                 rnaseq_process.handle(project, request)           
                 print 'done handling'

@@ -31,8 +31,6 @@ cancelSampleDialogBtn.addEventListener("click", function(e){
 // makes ajax call to server
 addSampleDialogBtn.addEventListener("click", function(e){
 
-	sampleEntryDialog.style.display = "none";
-	document.getElementById("main-container").classList.remove("blur");
 	var sampleEntry = document.getElementById("sample-entry-input");
 	var samplename = sampleEntry.value;
 	sampleEntry.value = ""; 
@@ -40,6 +38,20 @@ addSampleDialogBtn.addEventListener("click", function(e){
 	var metaEntry = document.getElementById("sample-meta-input");
 	var sampleMeta = metaEntry.value;
 	metaEntry.value = ""; 
+
+	//do a quick check on the uniqueness of the sample name.  The DB enforces this, but we can block it here
+	var sampleBoxes = document.getElementsByClassName("sample-box");
+	for(var i=0; i<sampleBoxes.length; i++){
+		var b = sampleBoxes[i];
+		var sn = b.getAttribute("samplename");
+		if (samplename == sn){
+			alert("The sample name " + samplename + " has already been used.  Try again.");
+			return;
+		}
+	}
+
+	sampleEntryDialog.style.display = "none";
+	document.getElementById("main-container").classList.remove("blur");
 
 	//upload to db
 	var pk = document.getElementById("pk-field").value;

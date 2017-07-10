@@ -88,3 +88,39 @@ def oauth2_callback(request):
 			return HttpResponseRedirect(settings.LOGIN_REDIRECT_URL)
 		except ObjectDoesNotExist as ex:
 			return HttpResponseRedirect(reverse('unauthorized'))
+
+
+
+def drive_test(request):
+	from apiclient.discovery import build
+	credentials = request.session['drive_credentials']
+	print 'have credentials: %s' % credentials
+	http_auth = credentials.authorize(httplib2.Http())
+	drive = build('drive', 'v3', http=http_auth)
+	files = drive.files().list().execute()
+	return render(request, 'drive.html', {'filelist':files})    
+
+
+def oauth2_drive_callback(request):
+	from oauth2client import client
+	flow = client.flow_from_clientsecrets(settings.DRIVE_CREDENTIALS, scope='https://www.googleapis.com/auth/drive.readonly', redirect_uri='http://cccb-analysis.tm4.org:8080/drive-callback')
+	flow.params['access_type'] = 'offline'
+	flow.params['include_granted_scopes'] = 'true'
+
+	if 'code' not in request.GET:
+		auth_uri = flow.step1_get_authorize_url()
+		return HttpResponseRedirect(auth_uri)
+	else:
+		auth_code = request.GET['code']
+		credentials = flow.step2_exchange(auth_code)
+		request.session['drive_credentials'] = credentials.to_json()
+		return HttpResponseRedirect(reverse('drive_view'))
+		
+
+def oauth2_dropbox_callback(request):
+	print 'Dropbox request received'
+	print request
+	return HttpResponse('')
+
+def dropbox_test(request):
+	return render(request, 'dropbox.html', {'msg':'hello world'})

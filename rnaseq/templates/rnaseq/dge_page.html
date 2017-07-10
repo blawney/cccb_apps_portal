@@ -1,0 +1,108 @@
+{% extends "analysis_portal/base.html" %}
+{% load static %}
+{% block content %}
+<div id="main-container" class="container">
+	<div class="row">
+		<div class="col-md-6">
+			<span id="project-title" class="project-title">{{project_name}}</span>
+			<input id="pk-field" type="hidden" value="{{project_pk}}">
+		</div>
+	</div>
+	<div class="row">
+		<div id="go-back" class="col-md-6">
+			<span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+			<a href="/analysis/home/">Back</a>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-7">
+			<div id="add-sample-panel" class="panel panel-default">     
+				<div class="panel-heading">
+					<h4>Create experimental contrast</h4>
+				</div>
+				<div id="contrast-panel-inner" class="panel-wrapper-div">
+					<input id="contrast-name-input" placeholder="Name of contrast" type="text" class="form-control">
+					<div class="empty-spacer"></div>
+					<div class="row">
+					<div class="form-group col-md-6">
+						<label for="lfc_input">Log2 Fold-Change</label> <input id="lfc_input" type="text" class="form-control positive-number-input" value="1.0">
+					</div>
+					<div class="form-group col-md-6">
+						<label for="pval_input">p-Value (less than this value)</label> <input id="pval_input" type="text" class="form-control positive-number-input" value="0.05">
+					</div>
+					</div>
+					<div class="empty-spacer"></div>
+					<div>
+						<input class="form-control group-name-input" placeholder="Name of grouping" type="text">
+						<span id="group-1-name" class="group-name">Group A</span><span id="edit-gropup-1-name" class="glyphicon glyphicon-pencil group-name-edit" aria-hidden="true"></span>
+						<div id="group-1-box" class="group-box" groupName="Group A">
+						</div>
+					</div>
+					<div class="empty-spacer"></div>
+					<div>
+						<input class="form-control group-name-input" placeholder="Name of grouping" type="text">
+						<span id="group-2-name" class="group-name">Group B</span><span id="edit-gropup-2-name" class="glyphicon glyphicon-pencil group-name-edit" aria-hidden="true"></span>
+						<div id="group-2-box" class="group-box" groupName="Group B">
+						</div>
+					</div>
+				</div>
+			</div>
+                </div>
+		<div class="col-md-5">
+			<div class="row">
+				<div class="col-md-12">
+					<div id="existing-samples-panel" class="panel panel-default">
+						<div class="panel-heading">
+							<h4>Samples</h4>
+						</div>
+						<div class="panel-wrapper-div">
+							<div id="existing-samples-wrapper">
+							{% for sample in sample_set %}
+								<p id="sample-{{sample.pk}}-tag" class="sample-display" pk="{{sample.pk}}" sample="{{sample.name}}" draggable="true">
+									<span class="file-tag">{{sample.name}}</span>
+								</p>
+							{% endfor %}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+                        <div class="row">
+                                <div class="col-md-12">
+                                        <div id="start-dge-panel" class="panel panel-default">
+                                                <div class="panel-heading">
+                                                        <h4>Start analysis</h4>
+                                                </div>
+                                                <div class="panel-wrapper-div">
+							<p>Each group now has at least one sample, and the analysis can begin</p>
+							<button id="start-dge-button" class="btn btn-primary">Start analysis</button>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+                        <div class="row">
+                                <div class="col-md-12">
+                                        <div id="instructions-panel" class="panel panel-default">
+                                                <div class="panel-heading">
+                                                        <h4>Instructions</h4>
+                                                </div>
+                                                <div class="panel-wrapper-div">
+							<p>Perform your differential expression analysis by:</p>
+
+							<p>Pick a name for your contrast- just something to remember it by, like <i>"pre versus post treatment"</i></p>
+							<p>Change the name of your experimental groups, if you like.  It does not affect the results, but is helpful for keeping everything labeled and clear.</p>
+							<p>Pick a threshold for the log-fold-change and p-value for differential expression.  These parameters are used when filtering for the plots that are created.  If too many (or
+							too few) genes pass these thresholds, you can simply re-run the analysis.  We have pre-filled typical values for these parameters.
+							</p>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+	</div>
+</div>
+{% endblock %}
+
+{% block page_specific_script %}
+	<script src="{% static "js/rnaseq_dge.js" %}"></script>
+{% endblock %}

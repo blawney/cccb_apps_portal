@@ -121,13 +121,13 @@ body {
 	margin-bottom:20px;
 }
 
-#do-analysis-panel, #existing-files-panel, #add-sample-panel, #proceed-to-summary-panel, #summary-panel, #project-panel, #instructions-panel, #choose-genome-panel{
+#do-analysis-panel, #existing-files-panel, #add-sample-panel, #proceed-to-summary-panel, #summary-panel, #project-panel, #instructions-panel, #choose-genome-panel, #existing-samples-panel, #start-dge-panel{
 	opacity: 0.9;
 	margin-top:30px;
 	border-radius:20px;
 }
 
-#do-analysis-panel .panel-heading, #existing-files-panel .panel-heading, #add-sample-panel .panel-heading, #proceed-to-summary-panel .panel-heading, #summary-panel .panel-heading, #choose-genome-panel .panel-heading, #project-panel .panel-heading, #instructions-panel .panel-heading{
+#do-analysis-panel .panel-heading, #existing-files-panel .panel-heading, #add-sample-panel .panel-heading, #proceed-to-summary-panel .panel-heading, #summary-panel .panel-heading, #choose-genome-panel .panel-heading, #project-panel .panel-heading, #instructions-panel .panel-heading, #existing-samples-panel .panel-heading, #start-dge-panel .panel-heading{
 	border-top-left-radius:20px;
 	border-top-right-radius:20px;
 }
@@ -136,6 +136,15 @@ body {
 	color:#FFFFFF;
 	font-size:28px;
 	margin-right:10px;
+}
+.group-name{
+	font-size:18px;
+	margin-right:10px;
+	margin-top:20px;
+}
+.group-name-edit{
+	font-size:16px;
+	cursor:pointer;
 }
 #edit-project-title{
 	color:#FFFFFF;
@@ -298,6 +307,15 @@ body {
 	padding-top:10px;
 	padding-bottom:10px;
 }
+.group-box{
+	width:100%;
+	height:200px;
+	background-color: lightgray;
+	margin-top:10px;
+	border-radius:10px;
+	padding-top:10px;
+	padding-bottom:10px;
+}
 
 .rp-div{
 	position:relative;
@@ -385,4 +403,30 @@ body {
 
 #main-container{
 	margin-top:20px;
+}
+
+.empty-spacer{
+	height:20px;
+}
+
+.group-name-input{
+	display:none;
+}
+
+#start-dge-panel{
+	display:none;
+}
+
+#existing-samples-wrapper{
+	min-height:50px;
+}
+
+.bolded{
+	font-weight:600;
+}
+
+#dropbox-chooser{
+	padding:10px;
+	margin-bottom:20px;
+	font-size:16px;
 }

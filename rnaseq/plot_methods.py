@@ -4,6 +4,7 @@ matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
+import pandas as pd
 import numpy as np
 import os
 import glob
@@ -90,4 +91,27 @@ def plot_total_read_count(log_data, filename):
 	plt.rc("font", **font)
 	ax.set_title('Total Input Reads')
 	fig.savefig(filename, bbox_inches='tight')
+	plt.close()
+
+
+def volcano_plot(dge_df, output_figure_path, l2fc_threshold=1, padj_threshold=0.05):
+	import seaborn as sns
+	sns.set_style('darkgrid')
+	sns.set(font='serif', font_scale=1.5)
+	fig, ax = plt.subplots(figsize=(10,12))
+	max_y = -np.log10(dge_df['padj'].min())
+	min_x = dge_df['log2FoldChange'].min()
+	max_x = dge_df['log2FoldChange'].max()
+	marked_idx = (np.abs(dge_df['log2FoldChange']) > l2fc_threshold) & (dge_df['padj'] < padj_threshold)
+	marked_points = dge_df.ix[marked_idx]
+	unmarked_points = dge_df.ix[~marked_idx]
+	ax.scatter(marked_points['log2FoldChange'], -1*np.log10(marked_points['padj']), alpha=0.5,c=sns.xkcd_palette(['grey green',]))
+	ax.scatter(unmarked_points['log2FoldChange'], -1*np.log10(unmarked_points['padj']), alpha=0.5, c=sns.xkcd_palette(['denim blue',]))
+	#ax.set_yscale('log')
+	ax.axhline(-np.log10(padj_threshold), linewidth=1, c=sns.xkcd_palette(['denim blue'])[0])
+	ax.set_xlabel('Log2 Fold Change', fontsize=18)
+	ax.set_ylabel('-Log10(Adjusted P-value)', fontsize=18)
+	ax.set_xlim(1.1*np.array([min_x, max_x]))
+	ax.set_ylim(1.1*np.array([-1, max_y]))
+	fig.savefig(output_figure_path, bbox_inches='tight')
 	plt.close()

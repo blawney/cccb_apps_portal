@@ -18,6 +18,10 @@ from django.contrib.auth.decorators import login_required
 from google.cloud import storage  
 from client_setup.models import Project
 
+from . import tasks
+
+from celery import chord
+
 from django.conf import settings
 
 SIGNED_URL_EXPIRATION = datetime.timedelta(days=1)
@@ -77,3 +81,37 @@ def create_signed_post_rq(gcs_resource_path):
                         resource=gcs_resource_path,
                         querystring=urllib.urlencode(query_params))
 
+
+@login_required
+def dropbox_transfer(request, project_pk):
+	print 'in drbx'
+	print project_pk
+	try:
+		project_pk = int(project_pk)
+		project = Project.objects.get(pk=project_pk)
+		if project.owner == request.user:
+			print request.POST
+			file_links = request.POST.get('transfer_files')
+			file_links = [x.strip() for x in file_links.split(',')]
+			print file_links
+			all_transfers = []
+			err_func = tasks.on_chord_error.s()
+			for i,f in enumerate(file_links):
+				print 'transfer %s' % f
+				file_name = f.split('/')[-1]
+				destination = os.path.join(project.bucket, settings.UPLOAD_PREFIX, file_name)
+				destination = destination.replace(' ', '_')
+				all_transfers.append(tasks.dropbox_transfer_to_bucket.s(f, destination, project.pk))
+			#callback = tasks.wrapup.s(project=project)
+			[task.link_error(err_func) for task in all_transfers]
+			print 'about to invoke callback'
+			#callback = tasks.wrapup.s(kwargs={'project':project})
+			callback = tasks.wrapup.s(kwargs={'project_pk': project.pk})
+			#callback = tasks.wrapup.s(kwargs={'project_pk': project.pk}).on_error(tasks.on_chord_error.s())
+			#callback = tasks.wrapup.s(kwargs={'project_pk': project.pk}).set(link_error='on_chord_error')
+			print'about to do chord'
+			r = chord(all_transfers)(callback)
+			print 'done with chord'
+		return HttpResponse('')
+	except:
+		return HttpResponseBadRequest('')

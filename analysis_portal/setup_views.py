@@ -6,6 +6,7 @@ import os
 import re
 
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
@@ -14,6 +15,7 @@ from client_setup.models import Project, Sample, DataSource, Organism
 import sys
 sys.path.append(os.path.abspath('..'))
 from rnaseq import rnaseq_process
+from variant_calling import variant_process_submission
 
 import helpers
 
@@ -21,13 +23,18 @@ class ProjectDisplay(object):
 	"""
 	A simple container class used when displaying the project in the UI
 	"""
-	def __init__(self, pk, name, service, completed, in_progress, finish_time, status_message):
+	def __init__(self, pk, name, service, completed, in_progress, paused, finish_time, status_message, next_action_text, next_action_url, has_downloads, download_url):
 		self.pk = pk
 		self.name = name
 		self.service = service
 		self.completed = completed
 		self.in_progress = in_progress
+		self.paused = paused
 		self.status_message = status_message
+		self.next_action_text = next_action_text
+		self.next_action_url = next_action_url
+		self.download_url = download_url
+		self.has_downloads = has_downloads
 		if finish_time:
 			self.finish_time = finish_time.strftime('%b %d, %Y (%H:%M)')
 		else:
@@ -89,7 +96,9 @@ def home_view(request):
 	# format the time
 	projects = []
 	for p in users_projects:
-		projects.append(ProjectDisplay(p.pk, p.name, p.service.name, p.completed, p.in_progress, p.finish_time, p.status_message))
+		download_url = reverse('download_view', kwargs={'project_pk':p.pk})
+		next_action_url = p.next_action_url
+		projects.append(ProjectDisplay(p.pk, p.name, p.service.description, p.completed, p.in_progress, p.paused_for_user_input, p.finish_time, p.status_message, p.next_action_text, next_action_url, p.has_downloads, download_url))
 
 	context['projects'] = projects
 	return render(request, 'analysis_portal/home.html', context)
@@ -135,30 +144,10 @@ def add_new_file(request, project_pk):
     if project is not None:
         newfile = request.POST.get('filename')
         newfile = os.path.join(settings.UPLOAD_PREFIX, newfile)
-        # see if it already exists:
-        if DataSource.objects.filter(project=project, filepath=newfile).exists():
-            # file was updated in google storage, but nothing to do here.  Return 204 so the front-end doesn't make more 'icons' for this updated file
-            return HttpResponse(status=204)
-        else:
-            new_ds = DataSource(project=project, source_type = 'fastq', filepath=newfile)
-            new_ds.save()
-
-            # create a sample by parsing the filename
-            basename = os.path.basename(newfile)
-            match = re.search(settings.FASTQ_GZ_PATTERN, basename).group(0)
-            samplename = basename[:-len(match)]
-            project_samples = project.sample_set.all()
-            if any([s.name==samplename for s in project_samples]):
-                s = Sample.objects.get(project=project, name=samplename)
-            else:
-                s = Sample(name=samplename, metadata='', project=project)
-                s.save()
-
-            # add the datasource to the sample
-            new_ds.sample = s
-            new_ds.save()
-
-            return HttpResponse('')
+        try:
+            return helpers.add_datasource_to_database(project, newfile)
+        except helpers.UndeterminedFiletypeException as ex:
+            return HttpResponseBadRequest(ex.message)
     else:
 		return HttpResponseBadRequest('')
 
@@ -217,8 +206,11 @@ def create_sample(request, project_pk):
 	if project is not None:
 		name = request.POST.get('name')
 		metadata = request.POST.get('metadata')
-		s = Sample(name=name, metadata=metadata, project=project)
-		s.save()
+		try:
+			s = Sample(name=name, metadata=metadata, project=project)
+			s.save()
+		except:
+			return HttpResponseBadRequest('')
 		return HttpResponse('');
 	else:
 		return HttpResponseBadRequest('')
@@ -282,7 +274,7 @@ def summary(request, project_pk):
 		for s in all_samples:
 			data_sources = s.datasource_set.all()	
 			full_mapping[s] = ', '.join([os.path.basename(x.filepath) for x in data_sources])
-		return render(request, 'analysis_portal/summary.html', {'mapping':full_mapping, 'project_pk':project.pk})
+		return render(request, 'analysis_portal/summary.html', {'mapping':full_mapping, 'project_pk':project.pk, 'project_name':project.name})
 	else:
 		return HttpResponseBadRequest('')
 
@@ -295,13 +287,16 @@ def kickoff(request, project_pk):
 	"""
 	project = helpers.check_ownership(project_pk, request.user)
 	if project is not None:
-		if project.service.name == 'RNA-Seq':
+		if project.service.name == 'rnaseq':
 			pk = project.pk
 			rnaseq_process.start_analysis(pk)
 			project.in_progress = True
 			project.start_time = datetime.datetime.now()
 			project.status_message = 'Performing alignments'
 			project.save()
+		elif project.service.name == 'variant_calling':
+			pk = project.pk
+			variant_process_submission.start_analysis(pk)
 		else:
 			print 'Could not figure out project type'
 		return redirect('analysis_home_view')

@@ -26,12 +26,12 @@
 \maketitle
 
 \section{Introduction}
-This report summarizes the analyses used in analyzing your data. For further questions regarding details of the analysis, please contact the CCCB.
+This report summarizes the processes used in analyzing your data. For further questions regarding details of the analysis, please contact the CCCB.
 
 \section{Alignment}
 Alignments were performed with STAR aligner  (version 2.5) \cite{star} which is specifically designed for RNA-Seq experiments, which may include multiple splice forms and fusion transcripts.  Not all aligners produce the same results, as sequencing mistake, low--complexity sequences, variants, and other factors are treated differently and may affect the quality of the resulting alignment to the reference genome.\\
 
-The output from the alignment is in a compressed, binary format-- a BAM file.  Although not often necessary, text representations of the BAM file (SAM format) may be generated with software such as samtools \cite{samtools}.\\
+The output from the alignment is in a compressed, binary format-- a BAM file.  You cannot open and read BAM files as you might a regular text file.  Although not often necessary, text representations of the BAM file (SAM format) may be generated with software such as samtools \cite{samtools}.\\
 
 Following the alignment, the BAM files are passed through several processing steps.  For our standard processes, we create three levels of BAM file:
 \begin{itemize}
@@ -66,7 +66,8 @@ Brief alignment metrics are shown below in Figures \ref{fig:relative_composition
 
 \section{Read quantification}
 
-For this analysis, reads and differential expression analysis are treated at the gene level, as opposed to inference about specific transcript abundance.  Even at the simpler level of counting reads at the gene level, there are subtle issues in just how you perform this.  For this task we use featureCounts software \cite{featureCounts} which produces integer counts for all genes in the supplied genome annotation file (GTF format).  \\
+For this analysis, reads and differential expression analysis are treated at the gene level, as opposed to inference about specific transcript abundance.  Even at the simpler level of counting reads at the gene level, there are subtle issues in just how you perform this.
+For this task we use featureCounts software \cite{featureCounts} which produces integer counts for all genes in the supplied genome annotation file (GTF format).  We note that sequencing reads are counted to the annotated coding regions (CDS).\\
 
 The resulting counts are arranged into an expression matrix such as,
 \begin{center}
@@ -81,6 +82,17 @@ The resulting counts are arranged into an expression matrix such as,
 \end{center}
 
 Files containing the information are termed the ``raw'' counts and are available at all three filter levels described for the BAM files.  However, for the reasons outlined above, we only make the ``primary filtered'' available by default.  These are tab-delimited files and may be opened with a spreadsheet program such as Excel; however, we caution that Excel can lead to unexpected errors in the gene names \cite{excel}.
+
+
+\section{Differential expression analysis (if performed)}
+
+For differential gene expression analysis, we use DESeq2 \cite{deseq2} software, part of R's Bioconductor software library.  In brief, this software works by estimating the mean and variance of each gene's expression based on the 
+alignment counts.  Using an assumed negative-binomial model for the counts, a statistical test is performed to assess differential expression.  This provides the p-value, given in the \verb|pvalue| column.  
+
+Given the large number of statistical tests performed (basically one for each gene with some caveats), it is important to use "multiple-test corrections" to limit false-positives when judging differential expression.
+This information is found in the \verb|padj| column.  A common threshold value for judging differential expression is $padj < 0.05$, although this threshold is effectively arbitrary, aimed at keeping the number of false positive genes to at most 5\%.  If there are relatively few genes passing this threshold, one may sort by the \verb|pvalue| column to assess potentially differentially expressed transcripts.\\
+
+Our best advice is to use the list as a guide to inform additional analyses such as those interrogating biological pathways/processes.  
 
 \section{Viewing your alignment data}
 \label{sec:igv}

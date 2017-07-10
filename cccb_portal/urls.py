@@ -30,4 +30,9 @@ urlpatterns = [
     url(r'^login/', views.login),
     url(r'^google-login/', views.google_login),
     url(r'^download/', include('download.urls')),
+    url(r'^rnaseq/', include('rnaseq.urls')),
+    url(r'^drive/', views.drive_test, name='drive_view'),
+    url(r'^drive-callback/', views.oauth2_drive_callback),
+    url(r'^dbx-callback/', views.oauth2_dropbox_callback),
+    url(r'^dbx/', views.dropbox_test),
 ]

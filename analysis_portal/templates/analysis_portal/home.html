@@ -15,6 +15,8 @@
                                     <th>Type</th>
                                     <th>Status</th>
                                     <th>Completed</th>
+                                    <th>Actions</th>
+                                    <th>Downloads</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -25,12 +27,15 @@
                                     <td>
                                         {% if p.completed %}
                                         <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span>
+					<span>{{p.status_message}}</span>
                                         {% elif p.in_progress %}
                                         <span class="glyphicon glyphicon-time" aria-hidden="true"></span>
+					<span>{{p.status_message}}</span>
+                                        {% elif p.paused %}
+					<span>{{p.status_message}}</span>
                                         {% else %}
                                         <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
                                         {% endif %}
-					<span>{{p.status_message}}</span>
                                     </td>
                                     <td>
                                         {% if p.completed %} 
@@ -39,11 +44,19 @@
                                         <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
                                         {% endif %}
                                     </td>
-                                    <td>
-					<a href="/analysis/genome-choice/{{p.pk}}">
-                                        <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-					</a>
-                                    </td>
+				    <td>
+						{{p.next_action_text}}
+						<a href="{{p.next_action_url}}">
+        	                                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+						</a>
+				    </td>
+				    <td>
+						{% if p.has_downloads %}
+						<a href="{{p.download_url}}">
+        	                                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+						</a>
+						{% endif %}
+				    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
