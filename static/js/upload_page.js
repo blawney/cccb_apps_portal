@@ -464,3 +464,22 @@ var button = Dropbox.createChooseButton(options);
 button.setAttribute("id", "dropbox-chooser");
 var uploadOptionsPanel = document.querySelector("#add-sample-panel > .panel-wrapper-div");
 uploadOptionsPanel.insertAdjacentElement('afterbegin', button);
+//end dropbox code
+
+//google drive code:
+var googleDriveButton = document.getElementById("drive-transfer");
+var transferButton = document.getElementById("go-transfer-files");
+var driveChooser = document.getElementById("drive-chooser");
+googleDriveButton.addEventListener("click", function(e){
+	//show the hidden div with the file chooser, and some "in progress" element
+	console.log('open new window');
+	window.open("https://cccb-analysis.tm4.org/drive-callback", "newWindow", "width=800,height=600");
+	//
+});
+
+transferButton.addEventListener("click", function(e){
+        driveChooser.style.display = 'none';
+        document.getElementById("main-container").classList.remove("blur");
+});
+
+//end google drive code

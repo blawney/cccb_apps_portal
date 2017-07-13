@@ -1,0 +1,51 @@
+{% extends "analysis_portal/base.html" %}
+{% load static %}
+{% block content %}
+<div id="main-container" class="container">
+        <div class="row">
+                <div class="col-md-6">
+                        <input id="pk-field" type="hidden" value="{{project_pk}}">
+                </div>
+        </div>
+        <div class="row">
+                <input id="pk-field" type="hidden" value="{{project_pk}}">
+                <div class="col-md-8 col-md-offset-2">
+                        <div id="drive-files-panel" class="panel panel-default">
+                                <div class="panel-heading">
+                                        <h4>Select files to transfer</h4>
+                                </div>
+                                <div class="panel-wrapper-div">
+                                        <div class="form-group">
+                                                {% if drive_contents.keys|length > 0 %}
+                                                {% for filetype, info_dict in drive_contents.iteritems %}
+							<div id="{{filetype}}-div">
+                                                        <span class="file-chooser-header">{{info_dict.label}}</span>
+                                                                                <span class="select-all">(Select all:
+                                                                                <input class="select-all-checkbox" type="checkbox" value="{{filetype}}">
+										)</span>
+		
+                                                       {% for file_id, file_name in info_dict.files %}
+                                                                <div class="checkbox">
+                                                                        <label>
+                                                                                <input type="checkbox" value="{{file_id}}" filename="{{file_name}}" filetype="{{filetype}}" class="file-selector">
+                                                                                {{file_name}}
+                                                                        </label>
+                                                                </div>
+                                                        {% endfor %}
+							</div>
+                                                {% endfor %}
+						{% else %}
+							No files!
+						{% endif %}
+                                        </div>
+                <button id="transfer-files" class="btn btn-primary">Transfer</button>
+                                </div>
+                        </div>
+                </div>
+        </div>
+</div>
+{% endblock %}
+
+{% block page_specific_script %}
+	<script src="{% static "js/drive_chooser.js" %}"></script>
+{% endblock %}

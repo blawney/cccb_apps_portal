@@ -1,7 +1,38 @@
 <html>
 	<body>
+		{% if filelist|length > 0 %}
+		<ul>
 		{% for f in filelist %}
+			<li>
 			{{f}}
+			</li>
 		{% endfor %}
+		</ul>
+		{% else %}
+			No files!
+		{% endif %}
+		<button id="transfer-files">Transfer</button>
 	</body>
+	<script>
+		var transferButton = document.getElementById("transfer-files");
+		transferButton.addEventListener("click", function(e){
+			var xhr = new XMLHttpRequest();
+        var csrftoken = getCookie('csrftoken');
+        xhr.open("POST", "/drive-callback/");
+        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        xhr.onreadystatechange = function(){
+                if(xhr.readyState === 4){
+                        if(xhr.status === 200){
+                                var new_p = document.createElement("p");
+								new_p.textContent = "YUP";
+                        }
+                        else{
+                                console.log("Problem with DRIVE");
+                        }
+                }
+        }
+        xhr.send("filename=" + file.name);
+		});
+	</script>
 </html>

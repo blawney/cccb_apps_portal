@@ -18,6 +18,8 @@ from django.contrib.auth.decorators import login_required
 from google.cloud import storage  
 from client_setup.models import Project
 
+import email_utils
+import analysis_portal.helpers as helpers
 from . import tasks
 
 from celery import chord
@@ -86,6 +88,7 @@ def create_signed_post_rq(gcs_resource_path):
 def dropbox_transfer(request, project_pk):
 	print 'in drbx'
 	print project_pk
+	HTML_BODY = '<html><body>The following files were not named correctly and did not transfer.  Please correct them and try again. <ul>%s</ul></body></html>'
 	try:
 		project_pk = int(project_pk)
 		project = Project.objects.get(pk=project_pk)
@@ -95,13 +98,27 @@ def dropbox_transfer(request, project_pk):
 			file_links = [x.strip() for x in file_links.split(',')]
 			print file_links
 			all_transfers = []
+			misnamed_file_list = []
 			err_func = tasks.on_chord_error.s()
 			for i,f in enumerate(file_links):
-				print 'transfer %s' % f
+				print 'try to transfer %s' % f
 				file_name = f.split('/')[-1]
-				destination = os.path.join(project.bucket, settings.UPLOAD_PREFIX, file_name)
-				destination = destination.replace(' ', '_')
-				all_transfers.append(tasks.dropbox_transfer_to_bucket.s(f, destination, project.pk))
+				try:
+					helpers.determine_filetype(file_name)
+					destination = os.path.join(project.bucket, settings.UPLOAD_PREFIX, file_name)
+					destination = destination.replace(' ', '_')
+					print 'make transfer with %s' % file_name
+					all_transfers.append(tasks.dropbox_transfer_to_bucket.s(f, destination, project.pk))
+				except helpers.UndeterminedFiletypeException as ex:
+					print 'problem with %s' % file_name
+					misnamed_file_list.append(file_name)
+			if len(misnamed_file_list) > 0:
+				print 'send a message- %s' % misnamed_file_list
+				file_str = ''.join(['<li>%s</li>' % x for x in misnamed_file_list])
+				print file_str
+				message_html = HTML_BODY % file_str
+				print message_html
+				email_utils.send_email(message_html, [project.owner.email,])
 			#callback = tasks.wrapup.s(project=project)
 			[task.link_error(err_func) for task in all_transfers]
 			print 'about to invoke callback'

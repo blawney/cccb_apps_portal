@@ -121,13 +121,13 @@ body {
 	margin-bottom:20px;
 }
 
-#do-analysis-panel, #existing-files-panel, #add-sample-panel, #proceed-to-summary-panel, #summary-panel, #project-panel, #instructions-panel, #choose-genome-panel, #existing-samples-panel, #start-dge-panel{
+#do-analysis-panel, #existing-files-panel, #add-sample-panel, #proceed-to-summary-panel, #summary-panel, #project-panel, #instructions-panel, #choose-genome-panel, #existing-samples-panel, #start-dge-panel, #drive-files-panel {
 	opacity: 0.9;
 	margin-top:30px;
 	border-radius:20px;
 }
 
-#do-analysis-panel .panel-heading, #existing-files-panel .panel-heading, #add-sample-panel .panel-heading, #proceed-to-summary-panel .panel-heading, #summary-panel .panel-heading, #choose-genome-panel .panel-heading, #project-panel .panel-heading, #instructions-panel .panel-heading, #existing-samples-panel .panel-heading, #start-dge-panel .panel-heading{
+#do-analysis-panel .panel-heading, #existing-files-panel .panel-heading, #add-sample-panel .panel-heading, #proceed-to-summary-panel .panel-heading, #summary-panel .panel-heading, #choose-genome-panel .panel-heading, #project-panel .panel-heading, #instructions-panel .panel-heading, #existing-samples-panel .panel-heading, #start-dge-panel .panel-heading, #drive-files-panel .panel-heading{
 	border-top-left-radius:20px;
 	border-top-right-radius:20px;
 }
@@ -427,6 +427,46 @@ body {
 
 #dropbox-chooser{
 	padding:10px;
-	margin-bottom:20px;
 	font-size:16px;
+}
+
+
+#drive-transfer{
+	height:48px;
+	background: url(/static/images/product48.png) no-repeat;
+	cursor: pointer;
+	padding-left:56px;
+}
+
+#drive-chooser{
+        width: 500px;
+        height: 200px;
+        background: #fff;
+        padding: 25px;
+        -webkit-border-radius: 3px;
+        -moz-border-radius: 3px;
+        border-radius: 3px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        margin-left: -250px;
+        margin-top: -100px;
+        display: none;
+        position:absolute;
+}
+
+.file-chooser-header{
+	font-size:18px;
+}
+
+.select-all{
+	margin-left:15px;
+}
+
+.select-all-checkbox{
+  vertical-align: middle;
+  position: relative;
+  bottom: 3px;
+}
 }
