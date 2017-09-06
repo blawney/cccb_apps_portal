@@ -10,8 +10,7 @@ import os
 import sys
 sys.path.append(os.path.abspath('..'))
 import email_utils
-sys.path.append(os.path.abspath('../delivery'))
-from download.models import DropboxTransferMaster, DropboxFileTransfer
+from download.models import DropboxTransferMaster, DropboxFileTransfer, ResourceDownload, Resource
 
 from google.cloud import storage
 import googleapiclient.discovery as discovery
@@ -58,6 +57,19 @@ def dropbox_auth(request):
         print '*'*200
         return HttpResponseRedirect(url)
 
+
+def setup_destination_folder(client, bucket_name):
+	cccb_download_folder = '/' + settings.DROPBOX_DEFAULT_DOWNLOAD_FOLDER
+	#project_id = bucket_name[len(settings.BUCKET_PREFIX):]
+	project_id = bucket_name
+	destination_folder = os.path.join(cccb_download_folder, project_id)
+	try:
+		files = client.files_list_folder(destination_folder)
+	except dropbox.exceptions.ApiError as ex:
+		client.files_create_folder(destination_folder, autorename=True)
+	return destination_folder
+
+
 def dropbox_callback(request):
 	print 'Dropbox request received: %s' % request.GET
 	parser = httplib2.Http()
@@ -82,6 +94,13 @@ def dropbox_callback(request):
 	token = c['access_token']
 	print 'DROPBOX_TOKEN=%s' % token
 	ft = request.session.get('files_to_transfer', None)
+
+	# get any existing transfers by this user:
+	existing_transfer_masters = DropboxTransferMaster.objects.filter(owner=request.user)
+	ongoing_transfers = []
+	for t in existing_transfer_masters:
+		ongoing_transfers.extend([x.source for x in DropboxFileTransfer.objects.filter(master=t)])
+
 	if ft:
 		master = DropboxTransferMaster(start_time = datetime.datetime.now(), owner = request.user)
 		master.save()
@@ -102,8 +121,27 @@ def dropbox_callback(request):
 		running_total = 0
 		transferred_file_list = []
 		untransferred_file_list = []
+		previously_completed_transfer_file_list = []
+		ongoing_transfer_list = []
 		at_least_one_transfer = False
 		for i,f in enumerate(ft):
+
+			# we can block the user from requesting downloads via the UI, but if that is stale, we need
+			# to check on the backend.  Need to check that the file has not already been transferred, AND that 
+			# it's not currently going.  A double-click seems very likely 
+
+			# check that not already downloaded
+			completed_resource_downloads = ResourceDownload.objects.filter(downloader=request.user)
+			completed_download_urls = [x.resource.public_link for x in completed_resource_downloads]
+			if f in completed_download_urls:
+				previously_completed_transfer_file_list.append(f)
+				continue
+
+			# check that not ongoing:
+			if f in ongoing_transfers:
+				ongoing_transfer_list.append(f)
+				continue
+
 			filepath = f[len(settings.PUBLIC_STORAGE_ROOT):]
 			bucket_name = filepath.split('/')[0]
 			object_path = '/'.join(filepath.split('/')[1:])
@@ -113,9 +151,10 @@ def dropbox_callback(request):
 			running_total += size_in_bytes
 			if running_total < space_remaining_in_bytes:
 				at_least_one_transfer = True
+				destination = setup_destination_folder(dbx, bucket_name)
 				t = DropboxFileTransfer(source=f, start_time = datetime.datetime.now(), master=master)
 				t.save()
-				do_transfer(f, i, master, t, token, compute_client, size_in_bytes)
+				do_transfer(f, destination, i, master, t, token, compute_client, size_in_bytes)
 				transferred_file_list.append(f)
 			else:
 				untransferred_file_list.append(f)
@@ -125,10 +164,12 @@ def dropbox_callback(request):
 	else:
 		transferred_file_list = []
 		untransferred_file_list = []
-	return render(request, 'download/dropbox_transfer.html', {'transferred_files':transferred_file_list, 'skipped_files':untransferred_file_list})
+	return render(request, 'download/dropbox_transfer.html', {'transferred_files':transferred_file_list, \
+			'skipped_files':untransferred_file_list, \
+			'previously_completed_transfer_file_list':previously_completed_transfer_file_list, \
+			'ongoing_transfer_list':ongoing_transfer_list})
 
-
-def do_transfer(file_source, transfer_idx, master, transfer, token, compute_client, size_in_bytes):
+def do_transfer(file_source, dropbox_destination_folderpath, transfer_idx, master, transfer, token, compute_client, size_in_bytes):
 	"""
 	file_source is the https:// link to the file
 	transfer_idx is an integer.  This helps isn potentially avoiding conflicts with the time-stamped machine names
@@ -163,6 +204,7 @@ def do_transfer(file_source, transfer_idx, master, transfer, token, compute_clie
 	config_params['dropbox_token'] = token
 	config_params['email_utils'] = settings.EMAIL_UTILS
 	config_params['email_credentials'] = settings.GMAIL_CREDENTIALS
+	config_params['dropbox_destination_folderpath'] = dropbox_destination_folderpath
 	print 'launch instance with params: %s' % config_params
 	launch_custom_instance(compute_client, config_params)
 
@@ -184,6 +226,7 @@ def launch_custom_instance(compute, config_params):
     enc_key = settings.ENCRYPTION_KEY
     email_utils = os.path.join(config_params['startup_bucket'], config_params['email_utils'])
     email_credentials = os.path.join(config_params['startup_bucket'], config_params['email_credentials'])
+    dropbox_destination_folderpath = config_params['dropbox_destination_folderpath']
 
     config = {
         'name': instance_name,
@@ -275,6 +318,10 @@ def launch_custom_instance(compute, config_params):
               'key':'email_credentials',
               'value': email_credentials
             },
+            {
+               'key':'dropbox_destination_folderpath',
+               'value': dropbox_destination_folderpath
+            },
           ]
         }
     }
@@ -303,6 +350,17 @@ def dropbox_transfer_complete(request):
 				transfer.is_complete = True
 				transfer.save()
 				master = DropboxTransferMaster.objects.get(pk = master_pk)
+
+				# register that file has been transferred to block multiple downloads
+				source = transfer.source # the https link
+				resource_list = Resource.objects.filter(public_link=source)
+				if len(resource_list) == 1:
+					rd = ResourceDownload(resource=resource_list[0], downloader=master.owner, download_date=datetime.datetime.now())
+					rd.save()
+				else:
+					print 'Problem!  Got a resource list that was not of length=1.'
+					print resource_list
+
 				all_transfers = master.dropboxfiletransfer_set.all()
 				if all([x.is_complete for x in all_transfers]):
 					print 'delete transfer master'

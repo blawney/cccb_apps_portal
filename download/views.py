@@ -10,7 +10,9 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, SuspiciousOperation
 
 from client_setup.models import Project
-from models import Resource 
+from models import Resource, ResourceDownload
+
+EXPIRED_LINK_MARKER = '#' 
 
 def check_ownership(project_pk, user):
     """
@@ -32,6 +34,37 @@ def check_ownership(project_pk, user):
         return None # if exception when parsing the primary key (or non-existant pk requested)
 
 
+def check_not_downloaded(d, user):
+	"""
+	Checks the database table for whether a resource has been downloaded already by this user
+	Note that the sorted_dict is of the following format:
+	{
+		'BAM files':{
+				'fileA.bam':'https://storage.cloud.google.com/....',
+				'fileA.bam':'https://storage.cloud.google.com/....',
+				'fileA.bam':'https://storage.cloud.google.com/....',
+		}
+		'compressed':{
+			'fileA.zip':'https://storage.cloud.google.com/....'
+		}
+	}
+	Since we no longer have Resource objects, we use the https://storage.cloud.google.com/... links as unique identifiers for the files
+	"""
+	users_downloads = ResourceDownload.objects.filter(downloader = user)
+	link_dict = {x.resource.public_link:x.download_date for x in users_downloads} # now have a dict of links that have been downloaded
+	for filetype, files_dict in d.items():
+		for basename, link in files_dict.items():
+			if link in link_dict:
+				download_time = link_dict[link]
+
+				# drop the existing entry
+				files_dict.pop(basename)
+
+				# make another descriptive name to indicate file was downloaded already:
+				newname = '%s (downloaded %s)' % (basename, download_time.strftime('%b %d, %Y'))
+				files_dict[newname] = EXPIRED_LINK_MARKER
+
+
 @login_required
 def download_view(request, project_pk):
     project = check_ownership(project_pk, request.user)
@@ -43,6 +76,10 @@ def download_view(request, project_pk):
                 d[o.resource_type].update({o.basename:o.public_link})
             except KeyError:
                 d[o.resource_type] = {o.basename:o.public_link}
+ 
+        # want to check that files were not already downloaded:
+        check_not_downloaded(d, request.user)
+
         tree = reformat_dict(d)
         return render(request, 'download/download_page.html', {
                 'tree':json.dumps(tree) if tree else tree})
@@ -61,5 +98,8 @@ def reformat_dict(d):
             new_d = {"text": key, "nodes":rv, "state":{"expanded": 1}}
             o.append(new_d)
         else:
-            o.append({"text": key, "href": value, "state":{"expanded": 1}})
+		if value == EXPIRED_LINK_MARKER:
+			o.append({"text": key, "selectable":0, "state":{"expanded": 1, "disabled":1}})
+		else:
+			o.append({"text": key, "href": value, "state":{"expanded": 1}})
     return o
