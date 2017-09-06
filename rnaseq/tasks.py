@@ -25,7 +25,7 @@ def deseq_call(deseq_cmd, results_dir, cloud_dge_dir, contrast_name, bucket_name
 			fout.write('STDOUT:\n%s\n' % stdout)
 			fout.write('STDERR:\n%s' % stderr)
 		#TODO send error email to CCCB
-		email_utils.send_email("There was a problem with the deseq analysis.  Check the %s directory" % results_dir, settings.CCCB_EMAILS)
+		email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), "There was a problem with the deseq analysis.  Check the %s directory" % results_dir, settings.CCCB_EMAILS, '[CCCB] Problem with DGE script')
 	else:
 
 		project = Project.objects.get(pk=project_pk)
@@ -84,4 +84,4 @@ def deseq_call(deseq_cmd, results_dir, cloud_dge_dir, contrast_name, bucket_name
 		</body>
 		</html>
 		"""
-		email_utils.send_email(message_html, [project_owner,])
+		email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), message_html, [project_owner,], '[CCCB] Differential gene expression analysis completed')

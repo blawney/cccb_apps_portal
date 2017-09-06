@@ -1,8 +1,10 @@
 var transferButton = document.getElementById("transfer-files");
 transferButton.addEventListener("click", function(e){
+	e.target.disabled = true;
+	var pk = document.getElementById("pk-field").value
 	var xhr = new XMLHttpRequest();
         var csrftoken = getCookie('csrftoken');
-        xhr.open("POST", "/dummy/");
+        xhr.open("POST", "/drive-transfer/");
         xhr.setRequestHeader("X-CSRFToken", csrftoken);
         xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
         xhr.onreadystatechange = function(){
@@ -26,7 +28,8 @@ transferButton.addEventListener("click", function(e){
 		}
 	}
 	console.log(d);
-        xhr.send("transfers="+JSON.stringify(d));
+        xhr.send("transfers="+JSON.stringify(d)+ "&project_pk="+pk);
+	alert('Your data transfer from Google Drive has started. We will send you an email when it has completed. Simply refresh this page once you receive the email.');
 });
 
 

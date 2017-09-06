@@ -473,7 +473,8 @@ var driveChooser = document.getElementById("drive-chooser");
 googleDriveButton.addEventListener("click", function(e){
 	//show the hidden div with the file chooser, and some "in progress" element
 	console.log('open new window');
-	window.open("https://cccb-analysis.tm4.org/drive-callback", "newWindow", "width=800,height=600");
+	var pk = document.getElementById("pk-field").value
+	window.open("https://cccb-analysis.tm4.org/drive?project_pk=" + pk, "newWindow", "width=800,height=600");
 	//
 });
 

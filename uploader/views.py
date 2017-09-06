@@ -118,7 +118,7 @@ def dropbox_transfer(request, project_pk):
 				print file_str
 				message_html = HTML_BODY % file_str
 				print message_html
-				email_utils.send_email(message_html, [project.owner.email,])
+				email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), message_html, [project.owner.email,], '[CCCB] Error with Dropbox transfer')
 			#callback = tasks.wrapup.s(project=project)
 			[task.link_error(err_func) for task in all_transfers]
 			print 'about to invoke callback'

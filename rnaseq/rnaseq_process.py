@@ -135,11 +135,13 @@ def launch_workers(compute, project, result_bucket_name, sample_mapping, config_
         kwargs['align_script_template'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['align_script_template'])
         kwargs['project_pk'] = project.pk
         kwargs['sample_pk'] = sample_tuple[0]
-        kwargs['callback_url'] = 'http://%s:8080/%s' % (get_internal_ip(), CALLBACK_URL)
+        kwargs['callback_url'] = '%s/%s' % (settings.HOST, CALLBACK_URL)
         kwargs['startup_script'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['startup_script'])
         kwargs['notification_email_addresses'] = config_params['notification_email_addresses']
-
-        launch_custom_instance(compute, config_params['google_project'], config_params['default_zone'], 'worker-%s-%s' % (sample_tuple[1].lower(), datetime.datetime.now().strftime('%m%d%y%H%M%S')), kwargs, config_params)
+        kwargs['token'] = settings.TOKEN
+        kwargs['enc_key'] = settings.ENCRYPTION_KEY
+        instance_name = 'worker-%s-%s' % (sample_tuple[1].lower().replace('_','-'), datetime.datetime.now().strftime('%m%d%y%H%M%S'))
+        launch_custom_instance(compute, config_params['google_project'], config_params['default_zone'], instance_name, kwargs, config_params)
 
 
 def launch_custom_instance(compute, google_project, zone, instance_name, kwargs, config_params):
@@ -158,7 +160,8 @@ def launch_custom_instance(compute, google_project, zone, instance_name, kwargs,
     email_utils = kwargs['email_utils']
     email_credentials = kwargs['email_credentials']
     notification_email_addresses = kwargs['notification_email_addresses']
-
+    token = kwargs['token']
+    enc_key = kwargs['enc_key']
     source_disk_image = 'projects/%s/global/images/%s' % (config_params['google_project'], config_params['image_name'])
 
     machine_type = "zones/%s/machineTypes/%s" % (zone, config_params['machine_type']) 
@@ -263,7 +266,15 @@ def launch_custom_instance(compute, google_project, zone, instance_name, kwargs,
             {
               'key':'notification_email_addresses',
               'value':notification_email_addresses
+            },
+            {
+              'key':'token',
+              'value':token
+            },            {
+              'key':'enc_key',
+              'value':enc_key
             }
+
           ]
         }
     }
@@ -470,7 +481,10 @@ def finish(project):
     local_files_to_zip.append(report_pdf_path)
 
     # zip them up:
-    zipfile = os.path.join(local_dir, bucket_name + '-results.zip') 
+    #zipfile = os.path.join(local_dir, bucket_name + '-results.zip') 
+    timestamp = datetime.datetime.now().strftime('%m%d%y%H%M%S')
+    zipfile = os.path.join(local_dir, 'alignment-results.%s.zip' % timestamp) 
+    
     zip_cmd = 'zip -j %s %s' % (zipfile, ' '.join(local_files_to_zip))
     print 'zip up using command: %s' % zip_cmd
     p = subprocess.Popen(zip_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -507,7 +521,7 @@ def finish(project):
     # the second arg is supposedd to be a list of emails
     print 'send notification email'
     message_html = write_completion_message(project)
-    email_utils.send_email(message_html, [project.owner.email,])
+    email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), message_html, [project.owner.email,], '[CCCB] Your RNA-Seq analysis has completed')
 
 
 def write_completion_message(project):
@@ -530,7 +544,7 @@ def handle(project, request):
     project is a Project object/model
     """
     print 'handling project %s' % project
-    sample_pk = int(request.GET.get('samplePK', '')) #exceptions can be caught in caller
+    sample_pk = int(request.POST.get('samplePK', '')) #exceptions can be caught in caller
     print 'sample_pk=%s' % sample_pk
     sample = Sample.objects.get(pk = sample_pk)
     print 'here?'*10

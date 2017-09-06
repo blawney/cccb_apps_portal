@@ -58,8 +58,8 @@ def reformat_dict(d):
     for key, value in d.items():
         if type(value) is dict:
             rv =reformat_dict(value)
-            new_d = {"text": key, "nodes":rv, "state":{"expanded": 0}}
+            new_d = {"text": key, "nodes":rv, "state":{"expanded": 1}}
             o.append(new_d)
         else:
-            o.append({"text": key, "href": value, "state":{"expanded": 0}})
+            o.append({"text": key, "href": value, "state":{"expanded": 1}})
     return o

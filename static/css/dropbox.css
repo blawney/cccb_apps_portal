@@ -4,7 +4,7 @@
 
 /* Move down content because we have a fixed navbar that is 50px tall */
 body {
-  padding-top: 50px;
+  padding-top: 80px;
 }
 
 
@@ -85,24 +85,6 @@ body {
 }
 
 
-/*
- * Placeholder dashboard ideas
- */
-
-.placeholders {
-  margin-bottom: 30px;
-  text-align: center;
-}
-.placeholders h4 {
-  margin-bottom: 0;
-}
-.placeholder {
-  margin-bottom: 20px;
-}
-.placeholder img {
-  display: inline-block;
-  border-radius: 50%;
-}
 
 /* Mixin */
 @mixin vertical-align($position: relative) {
@@ -128,57 +110,4 @@ body {
 #email-header{
 	cursor: default;
 	color: #9D9D9D;
-}
-
-#tree a {
-	padding-left:20px;
-}
-
-#tree .list-group-item{
-	border: 0px;
-	border-radius:30px;
-}
-
-#tree {
-	padding-top:20px;
-}
-
-body { 
- background: url('../images/article_blur.jpeg') no-repeat center center fixed;
- -webkit-background-size: cover;
- -moz-background-size: cover;
- -o-background-size: cover;
- background-size: cover;
-}
-
-#selector-panel .panel-heading, #methods-panel .panel-heading{
-        border-top-left-radius:30px;
-        border-top-right-radius:30px;
-}
-
-.panel-default {
- opacity: 0.7;
- border-radius: 30px;
- margin-top:40px;
-}
-
-#msg-div{
- padding:20px;
-}
-
-.msg-header{
-        padding-left:30px;
-}
-
-.content{
-	padding:20px;
-}
-
-#dropbox-transfer-button{
-        background: url('../images/dropbox_blue.png') no-repeat;
-        height:52px;
-        width:220px;
-        background-size: 210px 48px;
-        border-radius: 10px;
-        cursor:pointer;
 }

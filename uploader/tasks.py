@@ -3,7 +3,7 @@ from celery.decorators import task
 import subprocess
 import os
 import email_utils
-
+from django.conf import settings
 import analysis_portal.helpers as helpers
 from client_setup.models import Project
 
@@ -30,7 +30,7 @@ def dropbox_transfer_to_bucket(source_link, destination, project_pk):
 		        project_owner = project.owner.email
 			message = 'The file type of your Dropbox file (%s) could not be determined. Please consult the instructions on how to name files for the application. Then try again.' % source_link.split('/')[-1]
         		message_html = HTML_BODY % message
-        		email_utils.send_email(message_html, [project_owner,])
+        		email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), message_html, [project_owner,], '[CCCB] Problem with Dropbox transfer')
 			raise ex
 
 @task(name='wrapup')
@@ -41,7 +41,7 @@ def wrapup(x, kwargs):
 	project_owner = project.owner.email
 	message = 'Your file transfer from Dropbox is complete! Return to the page or refresh'
 	message_html = HTML_BODY % message
-	email_utils.send_email(message_html, [project_owner,])
+	email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), message_html, [project_owner,], '[CCCB] Dropbox transfer complete')
 
 @task(name='on_chord_error')
 def on_chord_error(*args, **kwargs):

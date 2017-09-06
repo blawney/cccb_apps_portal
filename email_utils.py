@@ -25,10 +25,9 @@ def strip_tags(html):
     return s.get_data()
 
 
-def send_email(message_html, addresses):
+def send_email(credential_file_path, message_html, addresses, subject):
     print 'in send email function'
-    creds = '/webapps/cccb_portal/gmail_credentials.json'
-    store = Storage(creds)
+    store = Storage(credential_file_path)
     credentials = store.get()
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('gmail', 'v1', http=http)
@@ -41,7 +40,7 @@ def send_email(message_html, addresses):
         message.attach(part2_html)
         message['to'] = recipient
         message['From'] = formataddr((str(Header('CCCB', 'utf-8')), sender))
-        message['subject'] = 'Processing done'
+        message['subject'] = subject
         msg = {'raw': base64.urlsafe_b64encode(message.as_string())}
         sent_message = service.users().messages().send(userId='me', body=msg).execute()
         print sent_message
@@ -60,7 +59,7 @@ def test():
     </html>
     """
     addresses = ['brianlawney@gmail.com',]
-    send_email(message_html, addresses)
+    send_email(message_html, addresses, 'test subject')
 
 
 if __name__ == '__main__':

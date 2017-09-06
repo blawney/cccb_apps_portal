@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponseBadRequest, HttpResponse
 import datetime
 import helpers
@@ -11,6 +12,10 @@ import os
 sys.path.append(os.path.abspath('..'))
 from rnaseq import rnaseq_process
 
+from Crypto.Cipher import DES
+import base64
+
+from django.conf import settings
 from client_setup.models import Project
 
 @login_required
@@ -45,33 +50,40 @@ def show_complete(request, project_pk):
 def finish():
         print 'Do some final pulling together'
 
-
+@csrf_exempt
 def notify(request):
     """
     Called when a worker completes
     Each type of project may have different requirements on what information they need to send.
     """
-    # at this endpoint, we only want to accept internal requests (from another GCE instance)
-    user_ip = request.META['REMOTE_ADDR']
-    print user_ip
-    if user_ip.startswith('10.142'):
-        project_pk = int(request.GET.get('projectPK', ''))
-        print 'look for poejct with pk=%s' % project_pk
-        try:
-            project = Project.objects.get(pk = project_pk)
-            print 'found project %s' % project
-            if project.service.name == 'rnaseq':
-                print 'found rnaseq project'
-                rnaseq_process.handle(project, request)           
-                print 'done handling'
-                return HttpResponse('thanks')
-            else:
+    print request.POST
+    if 'token' in request.POST:
+        b64_enc_token = request.POST['token']
+        enc_token = base64.decodestring(b64_enc_token)
+        expected_token = settings.TOKEN
+        obj=DES.new(settings.ENCRYPTION_KEY, DES.MODE_ECB)
+        decrypted_token = obj.decrypt(enc_token)
+        if decrypted_token == expected_token:
+            print 'token matched'
+            project_pk = int(request.POST.get('projectPK', ''))
+            try:
+                project = Project.objects.get(pk = project_pk)
+                print 'found project %s' % project
+                if project.service.name == 'rnaseq':
+                    print 'found rnaseq project'
+                    rnaseq_process.handle(project, request)
+                    print 'done handling'
+                    return HttpResponse('thanks')
+                else:
+                    return HttpResponseBadRequest('')
+            except Exception as ex:
+                print 'threw exception'
+                print ex
+                print ex.message
                 return HttpResponseBadRequest('')
-        except Exception as ex:
-            print 'threw exceptioni'
-            print ex
-            print ex.message
+        else:
+            print 'token did not match'
             return HttpResponseBadRequest('')
     else:
-        print 'was not an internal rquest'
+        print 'request did not have the required token to authenticate with'
         return HttpResponseBadRequest('')

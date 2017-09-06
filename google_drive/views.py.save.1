@@ -1,0 +1,376 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+import datetime
+import urllib
+import httplib2  
+import json
+import hashlib
+import os
+import json
+import sys
+import re
+import subprocess
+
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login as django_login
+from django.http import HttpResponse, HttpResponseRedirect
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
+from django.urls import reverse
+
+from models import DriveUserCredentials
+
+from oauth2client import client as client
+import googleapiclient.discovery as discovery
+from ConfigParser import SafeConfigParser
+
+sys.path.append(os.path.abspath('..'))
+import email_utils
+import analysis_portal.helpers as helpers
+from client_setup.models import Project
+
+CONFIG_FILE = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'config.cfg')
+
+
+def notify(request):
+	print 'RECEIVED NOTIFICATION FROM WORKER'
+	user_ip = request.META['REMOTE_ADDR']
+	if user_ip.startswith('10.142'):
+		project_pk = int(request.GET.get('projectPK', ''))
+		try:
+			project = Project.objects.get(pk = project_pk)
+			
+			# now look in the bucket and update files accordingly
+			bucket_name = project.bucket
+			
+		except Exception as ex:
+			print 'threw exceptioni'
+			print ex
+			print ex.message
+			return HttpResponseBadRequest('')
+	else:
+		print 'was not an internal rquest'
+		return HttpResponseBadRequest('')
+	return HttpResponse('')
+
+
+@login_required
+def transfer(request):
+	print 'in transfer func after click'
+	project_pk = request.POST.get('project_pk')
+	project = helpers.check_ownership(project_pk, request.user)
+	if project is not None:
+		all_files = json.loads(request.POST.get('transfers'))
+		print 'project was found, all_files=%s' % all_files
+		transfer_files(project, json.dumps(all_files))
+	return HttpResponse('')
+
+
+def parse_config():
+    with open(CONFIG_FILE) as cfg_handle:
+        parser = SafeConfigParser()
+        parser.readfp(cfg_handle)
+        return parser.defaults()
+
+def transfer_files(project, transfer_json_str):
+    """
+    project is a Project object
+    transfer_json_str is a JSON string with file ID mapping to file name
+    """
+    params = parse_config()
+    owner = project.owner
+    try:
+        credentials_obj = DriveUserCredentials.objects.get(owner=owner)
+        params['oauth2_credentials'] = credentials_obj.json_credentials
+    except ObjectDoesNotExist as ex:
+        #TODO issue some error-- this is a very unlikely exception
+        pass
+    params['user_email'] = owner.email
+    params['cccb_project_pk'] = project.pk
+    params['bucket_name'] = project.bucket
+    params['transfer_json_str'] = transfer_json_str
+    compute_client = discovery.build('compute', 'v1')
+    launch_custom_instance(compute_client, params)
+
+def launch_custom_instance(compute, config_params):
+
+    now = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+    instance_name = 'drive-transfer-%s' % now
+
+    source_disk_image = 'projects/%s/global/images/%s' % (config_params['google_project'], config_params['image_name'])
+    disk_size_in_gb = config_params['disk_size_in_gb']
+    machine_type = "zones/%s/machineTypes/%s" % (config_params['default_zone'], config_params['machine_type'])
+    startup_script_url = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['startup_script']) 
+    result_bucket_name = config_params['bucket_name']
+    email_utils = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['email_utils'])
+    email_credentials = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['email_credentials'])
+    callback_url = settings.HOST + config_params['callback_url']
+
+
+    config = {
+        'name': instance_name,
+        'machineType': machine_type,
+
+        # Specify the boot disk and the image to use as a source.
+        'disks': [
+            {
+                'boot': True,
+                'autoDelete': True,
+                'initializeParams': {
+                    'sourceImage': source_disk_image,
+                     "diskSizeGb": disk_size_in_gb,
+                }
+            }
+        ],
+
+        # Specify a network interface with NAT to access the public
+        # internet.
+        'networkInterfaces': [{
+            'network': 'global/networks/default',
+            'accessConfigs': [
+                {'type': 'ONE_TO_ONE_NAT', 'name': 'External NAT'}
+            ]
+        }],
+
+        # Allow the instance to access cloud storage and logging.
+        'serviceAccounts': [{
+            'email': 'default',
+            'scopes': [
+                'https://www.googleapis.com/auth/compute',
+                'https://www.googleapis.com/auth/devstorage.full_control',
+                'https://www.googleapis.com/auth/logging.write'
+            ]
+        }],
+ 
+        'metadata': {
+            'items': [{
+                # Startup script is automatically executed by the
+                # instance upon startup.
+                'key': 'startup-script-url',
+                'value': startup_script_url
+            },
+            {
+              'key':'result_bucket_name',
+              'value': result_bucket_name
+            },
+            {
+              'key':'upload_folder', 
+              'value':config_params['upload_folder']
+            },
+            {
+              'key':'google_project',
+              'value': config_params['google_project']
+            },
+            {
+              'key':'google_zone',
+              'value': config_params['default_zone']
+            },
+            {
+              'key':'project_pk',
+              'value': config_params['cccb_project_pk']
+            },
+            {
+                'key':'callback_url',
+                'value': callback_url
+            },
+            {
+              'key':'email_utils',
+              'value': email_utils
+            },
+            {
+              'key':'email_credentials',
+              'value': email_credentials
+            },
+            {
+              'key':'notification_email_addresses',
+              'value':config_params['notification_email_addresses']
+            },
+            {
+              'key':'oauth2_credentials',
+              'value':config_params['oauth2_credentials']
+            },
+            {
+              'key':'transfer_json_str',
+              'value':config_params['transfer_json_str']
+            },
+	    {'key':'workers', 'value':config_params['workers']},
+	    {'key':'user_email', 'value':config_params['user_email']},
+          ]
+        }
+    }
+    return compute.instances().insert(
+        project=config_params['google_project'],
+        zone=config_params['default_zone'],
+        body=config).execute()
+
+
+@login_required
+def drive_get(request):
+	print 'in drive get'
+	user = request.user
+	project_pk = request.GET.get('project_pk', None)
+	if project_pk:
+		print 'had project pk=%s' % project_pk
+		request.session['project_pk'] = project_pk
+	else:
+		'request did NOT have a pk'
+	try:
+		credentials_obj = DriveUserCredentials.objects.get(owner=user)
+		credentials = client.OAuth2Credentials.from_json(credentials_obj.json_credentials)
+		http_auth = credentials.authorize(httplib2.Http())
+		drive = discovery.build('drive', 'v3', http=http_auth)
+		page_token = None
+		all_files = []
+		query_string = "name contains 'fastq.gz' or name contains 'bam'"
+		try:
+			while True:
+				response = drive.files().list(q=query_string).execute()
+				for f in response.get('files', []):
+					try:
+						helpers.determine_filetype(f['name'])
+						all_files.append(f)
+					except helpers.UndeterminedFiletypeException as ex:
+						pass
+				page_token = response.get('nextPageToken', None)
+				if page_token is None:
+					break
+		except client.HttpAccessTokenRefreshError as ex:
+			print 'error with token reauth'
+			raise ex
+		file_dict = {}
+		contents = {}
+		suffix_mapping = {'fastq.gz':'FastQ Files', 'bam': 'BAM Alignment Files'}
+		for f in all_files:
+			if f['mimeType'] != 'application/vnd.google-apps.folder': # if not a folder
+				for filetype in suffix_mapping.keys():
+					if f['name'].lower().endswith(filetype):
+						if filetype not in contents:
+							contents[filetype] = {'label':suffix_mapping[filetype], 'files':[]}
+						contents[filetype]['files'].append((f['id'],f['name']))
+		return render(request, 'google_drive/drive_chooser.html', {'drive_contents':contents, 'project_pk':request.session['project_pk']})
+	except ObjectDoesNotExist as ex:
+		print 'caught ex since credentails did not exist'
+		return HttpResponseRedirect(reverse('drive_callback'))
+
+
+def drive_callback(request):
+	from oauth2client import client
+	print 'in drive callback'
+	user = request.user
+	print user
+	try:
+		credentials_obj = DriveUserCredentials.objects.get(owner=user)
+		return HttpResponseRedirect(reverse('drive_view'))
+	except ObjectDoesNotExist as ex:
+		pass # 
+	flow = client.flow_from_clientsecrets(settings.DRIVE_CREDENTIALS, scope='https://www.googleapis.com/auth/drive', redirect_uri='https://cccb-analysis.tm4.org/drive-callback/')
+	flow.params['access_type'] = 'offline'
+	flow.params['include_granted_scopes'] = 'true'
+	#flow.params['prompt'] = 'consent'
+
+	if 'code' not in request.GET:
+		print 'code was NOT in request'
+		auth_uri = flow.step1_get_authorize_url()
+		return HttpResponseRedirect(auth_uri)
+	else:
+		print 'in the else condition'
+		auth_code = request.GET['code']
+		print auth_code
+		credentials = flow.step2_exchange(auth_code)
+		print 'CREDENTIALS:\n %s' % credentials
+		print 'CREDENTIALS(json):\n %s' % credentials.to_json()
+		#request.session['drive_credentials'] = credentials.to_json()
+		cred = DriveUserCredentials(owner=user, json_credentials=credentials.to_json())
+		cred.save()
+		return HttpResponseRedirect(reverse('drive_view'))
+
+
+def drive_test(request):
+	credentials = request.session.get('drive_credentials', None)
+	print 'have credentials (before): %s' % credentials
+	with open('json_creds.json', 'w') as fout:
+		json.dump(credentials, fout)
+	#to remove:
+	#credentials = None
+
+	if not credentials:
+		print 'go get creds'
+		return HttpResponseRedirect(reverse('drive_callback'))
+	print 'have credentials (after): %s' % credentials
+	credentials = OAuth2Credentials.from_json(credentials)
+	print '?'*30
+	print dir(credentials)
+	print '?'*30
+	http_auth = credentials.authorize(httplib2.Http())
+	drive = discovery.build('drive', 'v3', http=http_auth)
+	page_token = None
+	all_files = []
+	query_string = "name contains 'fastq.gz' or name contains 'bam'"
+	try:
+		while True:
+			response = drive.files().list(q=query_string).execute()
+			print response
+			for f in response.get('files', []):
+				all_files.append(f)
+			page_token = response.get('nextPageToken', None)
+			if page_token is None:
+				break
+	except client.HttpAccessTokenRefreshError as ex:
+		print 'Caught access token refresh ERROR'
+		request.session['drive_credentials'] = None
+		return HttpResponseRedirect(reverse('drive_callback'))
+	file_dict = {}
+	contents = {}
+	suffix_mapping = {'fastq.gz':'FastQ Files', 'bam': 'BAM Alignment Files'}
+
+	print all_files
+	for f in all_files:
+		print 'trying file %s' % f
+		if f['mimeType'] != 'application/vnd.google-apps.folder':
+			for filetype in suffix_mapping.keys():
+				print 'working on filetype %s' % filetype
+				if f['name'].lower().endswith(filetype):
+					if filetype not in contents:
+						contents[filetype] = {'label':suffix_mapping[filetype], 'files':[]}
+					contents[filetype]['files'].append((f['id'],f['name']))
+	#file_dict = {x['id']:x['name'] for x in all_files if x['mimeType'] != 'application/vnd.google-apps.folder'}
+	print contents	
+	#for f in all_files:
+	#	drive.files().get_media(fileID=f['id']).execute()
+	return render(request, 'analysis_portal/drive_chooser.html', {'drive_contents':contents, 'project_pk':2})    
+
+
+def oauth2_drive_callback(request):
+	print 'in oauth2 drive callback'
+	flow = client.flow_from_clientsecrets(settings.DRIVE_CREDENTIALS, scope='https://www.googleapis.com/auth/drive', redirect_uri='https://cccb-analysis.tm4.org/drive-callback/')
+	flow.params['access_type'] = 'offline'
+	flow.params['include_granted_scopes'] = 'true'
+	flow.params['prompt'] = 'consent'
+	#sesh = request.session
+	#cc = sesh.get('drive_credentials', None)
+
+	# to remove:
+	cc = None
+	print 'in drive callback, cc=--%s--' % cc
+	if cc:
+		print '*'*100
+		print cc
+		print '*'*100
+		return HttpResponseRedirect(reverse('drive_view'))
+
+	if 'code' not in request.GET:
+		print 'code was NOT in request'
+		auth_uri = flow.step1_get_authorize_url()
+		return HttpResponseRedirect(auth_uri)
+	else:
+		print 'in the else condition'
+		auth_code = request.GET['code']
+		print auth_code
+		credentials = flow.step2_exchange(auth_code)
+		print 'CREDENTIALS:\n %s' % credentials
+		print 'CREDENTIALS(json):\n %s' % credentials.to_json()
+		request.session['drive_credentials'] = credentials.to_json()
+		return HttpResponseRedirect(reverse('drive_view'))
+

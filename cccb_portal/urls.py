@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 
 import views
+import dropbox_utils
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
@@ -31,9 +32,11 @@ urlpatterns = [
     url(r'^google-login/', views.google_login),
     url(r'^download/', include('download.urls')),
     url(r'^rnaseq/', include('rnaseq.urls')),
-    url(r'^drive/', views.drive_test, name='drive_view'),
-    url(r'^drive-callback/', views.oauth2_drive_callback, name='drive_callback'),
-    url(r'^dbx-callback/', views.oauth2_dropbox_callback),
-    url(r'^dbx/', views.dropbox_test),
-    url(r'^dummy/', views.dummy_view),
+    url(r'^drive', include('google_drive.urls')),
+    #url(r'^drive/', views.drive_test, name='drive_view'),
+    #url(r'^drive-callback/', views.oauth2_drive_callback, name='drive_callback'),
+     url(r'dbx-file-register', dropbox_utils.register_files_to_transfer),
+    url(r'^dbx-callback/', dropbox_utils.dropbox_callback),
+    url(r'^dbx/', dropbox_utils.dropbox_auth),
+    url(r'dropbox-transfer-complete', dropbox_utils.dropbox_transfer_complete)
 ]
