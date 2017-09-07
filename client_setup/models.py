@@ -49,6 +49,7 @@ class Project(models.Model):
 	next_action_text = models.CharField(max_length = 100, default='')
 	next_action_url = models.CharField(max_length = 255, default='')
 	has_downloads = models.BooleanField(default=False)
+	max_sample_number = models.IntegerField(default=50)
 	objects = ProjectManager()
 
 	def __str__(self):

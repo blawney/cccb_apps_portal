@@ -44,7 +44,7 @@
 				{{ service_form.as_p }}
 				<p>
 				<label for="ilab_field">iLab ID</label>
-				<input type="text"/ name="ilab_id">
+				<input type="text" name="ilab_id">
 				</p>
 				<p>
 				<label for="service_selector" >CCCB Service</label>
@@ -53,6 +53,10 @@
 						<option value="{{ service.name }}">{{ service.name }}</option>
 					{% endfor %}
 				</select>
+				</p>
+				<p>
+					<label for="sample_number_field" >Maximum number of samples</label>
+					<input id="sample_number_field" type="number" min="1" name="max_samples">
 				</p>
 				<input type="submit" value="Submit" />
 			</form>

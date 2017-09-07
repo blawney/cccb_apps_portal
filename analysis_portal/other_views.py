@@ -87,3 +87,14 @@ def notify(request):
     else:
         print 'request did not have the required token to authenticate with'
         return HttpResponseBadRequest('')
+
+
+@login_required
+def problem(request, project_pk):
+	project = helpers.check_ownership(project_pk, request.user)
+	if project is not None:
+		all_samples = project.sample_set.all()
+		allowed_samples = project.max_sample_number
+		return render(request, 'analysis_portal/problem.html', {'project_pk':project.pk, 'project_name':project.name, 'allowed_samples':allowed_samples, 'total_samples':len(all_samples)})
+        else:
+                return HttpResponseBadRequest('')

@@ -21,4 +21,5 @@ urlpatterns = [
     url(r'^do-analysis/(?P<project_pk>[0-9]+)/$', setup_views.kickoff),
     url(r'^progress/(?P<project_pk>[0-9]+)/$', other_views.show_in_progress, name='in_progress_view'),
     url(r'^complete/(?P<project_pk>[0-9]+)/$', other_views.show_complete, name='complete_view'),
+    url(r'^problem/(?P<project_pk>[0-9]+)/$', other_views.problem, name='problem_view'),
 ]

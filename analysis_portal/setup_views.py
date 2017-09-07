@@ -287,16 +287,23 @@ def kickoff(request, project_pk):
 	"""
 	project = helpers.check_ownership(project_pk, request.user)
 	if project is not None:
-		if project.service.name == 'rnaseq':
-			pk = project.pk
-			rnaseq_process.start_analysis(pk)
-			project.in_progress = True
-			project.start_time = datetime.datetime.now()
-			project.status_message = 'Performing alignments'
-			project.save()
-		elif project.service.name == 'variant_calling':
-			pk = project.pk
-			variant_process_submission.start_analysis(pk)
+		project_samples = project.sample_set.all()
+		if len(project_samples) <= project.max_sample_number:
+			if project.service.name == 'rnaseq':
+				pk = project.pk
+				rnaseq_process.start_analysis(pk)
+				project.in_progress = True
+				project.start_time = datetime.datetime.now()
+				project.status_message = 'Performing alignments'
+				project.save()
+			elif project.service.name == 'variant_calling':
+				pk = project.pk
+				variant_process_submission.start_analysis(pk)
+			else:
+				print 'Could not figure out project type'
+			return redirect('analysis_home_view')
 		else:
-			print 'Could not figure out project type'
-		return redirect('analysis_home_view')
+			# had too many samples
+			return redirect('problem_view', project_pk = project_pk)
+	else:
+		return HttpResponseBadRequest('')

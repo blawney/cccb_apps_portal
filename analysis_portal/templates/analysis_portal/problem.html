@@ -1,0 +1,31 @@
+{% extends "analysis_portal/base.html" %}
+{% load static %}
+{% block content %}
+<div class="container">
+        <div class="row">
+                <div class="col-md-6">
+                        <span id="project-title" class="project-title">{{project_name}}</span>
+                        <input id="pk-field" type="hidden" value="{{project_pk}}">
+                </div>
+        </div>
+        <div class="row">
+                <div id="go-back" class="col-md-6">
+                        <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+                        <a href="/analysis/annotate-files/{{project_pk}}">Back</a>
+                </div>
+        </div>
+   <div class="row">
+        <div id="summary-panel" class="panel panel-default">
+            <div class="panel-heading">
+                <h4>Problem!</h4>
+            </div>
+		<div class="panel-wrapper-div">
+			You added {{total_samples}} samples, but only {{allowed_samples}} samples were permitted at project creation.  
+			Please <a href="/analysis/annotate-files/{{project_pk}}">Go back</a> and remove samples.
+		</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block page_specific_script %}
+{% endblock %}

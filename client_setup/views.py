@@ -45,6 +45,11 @@ def setup_client(request):
 					svc = service_dict[service]
 
 					ilab_id = request.POST.get('ilab_id')
+
+					
+					max_samples = int(request.POST.get('max_samples'))
+
+
 				except KeyError:
 					return HttpResponseBadRequest('')
 
@@ -70,6 +75,7 @@ def setup_client(request):
 				project = Project.objects.create_project(user, svc, bucket_name)
 				project.ilab_id = ilab_id
 				project.next_action_text = 'Upload files'
+				project.max_sample_number = max_samples
 				project.save()
 
 				project.next_action_url = reverse('choose_genome', kwargs={'project_pk':project.pk})
