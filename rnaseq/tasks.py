@@ -36,10 +36,10 @@ def deseq_call(deseq_cmd, results_dir, cloud_dge_dir, contrast_name, bucket_name
 		project_owner = project.owner.email
 
 		# make some plots
-		#for f in glob.glob(os.path.join(results_dir, '*deseq.tsv')):
-		#	output_figure_path = f.replace('deseq.tsv', 'volcano_plot.pdf')
-		#	dge_df = pd.read_table(f, sep='\t')
-		#	volcano_plot(dge_df, output_figure_path)
+		for f in glob.glob(os.path.join(results_dir, '*deseq.tsv')):
+			output_figure_path = f.replace('deseq.tsv', 'volcano_plot_v2.pdf')
+			dge_df = pd.read_table(f, sep='\t')
+			volcano_plot(dge_df, output_figure_path)
 
 
 		# zip everything up
