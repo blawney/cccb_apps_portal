@@ -416,6 +416,10 @@ def finish(project):
         bam_pattern = '%s/.*%s.bam$' % (config_params['output_bucket'],fl)
         bam_objs.extend([x for x in all_contents if re.match(bam_pattern, x.name) is not None])
 
+        # also add the .bai files:
+        bai_pattern = '%s/.*%s.bam.bai$' % (config_params['output_bucket'],fl)
+        bam_objs.extend([x for x in all_contents if re.match(bai_pattern, x.name) is not None])
+
     # add user's privileges to these:
     for b in bam_objs:
         print 'grant ownership on bam %s' % b
@@ -558,7 +562,7 @@ def handle(project, request):
         print 'All samples have completed!'
         project.in_progress = False
         project.paused_for_user_input = True
-        project.completed = False
+        project.completed = True
         project.status_message = 'Completed alignments'
 	project.next_action_text = 'Perform differential expression'
 	project.next_action_url = reverse('dge', kwargs={'project_pk':project.pk})
