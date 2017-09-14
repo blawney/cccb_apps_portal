@@ -15,7 +15,8 @@ from client_setup.models import Project, Sample, DataSource, Organism
 import sys
 sys.path.append(os.path.abspath('..'))
 from rnaseq import rnaseq_process
-from variant_calling import variant_process_submission
+from variant_calling_from_fastq import variant_process_submission_from_fastq
+from variant_calling_from_bam import variant_process_submission_from_bam
 
 import helpers
 
@@ -119,7 +120,8 @@ def upload_page(request, project_pk):
 			else:
 				samplename = None	
 			existing_files.append(FileDisplay(samplename, f.pk, f.filepath))
-		return render(request, 'analysis_portal/upload_page.html', {'project_name': project.name, 'existing_files':existing_files, 'project_pk': project_pk})
+		instructions = project.service.upload_instructions
+		return render(request, 'analysis_portal/upload_page.html', {'project_name': project.name, 'existing_files':existing_files, 'project_pk': project_pk, 'instructions':instructions})
 	else:        
 		return HttpResponseBadRequest('')
 	
@@ -296,9 +298,12 @@ def kickoff(request, project_pk):
 				project.start_time = datetime.datetime.now()
 				project.status_message = 'Performing alignments'
 				project.save()
-			elif project.service.name == 'variant_calling':
+			elif project.service.name == 'variant_calling_from_bam':
 				pk = project.pk
-				variant_process_submission.start_analysis(pk)
+				variant_process_submission_from_bam.start_analysis(pk)
+                        elif project.service.name == 'variant_calling_from_fastq':
+                                pk = project.pk
+                                variant_process_submission_from_fastq.start_analysis(pk)
 			else:
 				print 'Could not figure out project type'
 			return redirect('analysis_home_view')

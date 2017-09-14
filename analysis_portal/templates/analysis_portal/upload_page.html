@@ -75,16 +75,7 @@
 							<h4>Instructions</h4>
 						</div>
 						<div class="panel-wrapper-div">
-							<p>Manage your files here.  Upload or remove your compressed, FASTQ-format files OR alignment (BAM) files as necessary.  In the next step, you can assign the files to particular samples.</p>
-							<p class="bolded">FastQ file upload:</p>
-							<p>For naming your files, we enforce a particular naming convention which is followed by most sequencing providers. We also require files to be Gzip-compressed to save 
-							disk space; files will typically end with "gz" if that is the case.</p>
-							<p>If your sequencing is single-end protocol, we expect files named like [SAMPLE]_R1.fastq.gz, where [SAMPLE] is your sample's name.</p>
-							<p>For paired sequencing protocols
-							there will be two files per sample, named [SAMPLE]_R1.fastq.gz and [SAMPLE]_R2.fastq.gz; note the only difference is "R2" to indicate the second of a read pairing.</p>
-							<p class="bolded">BAM file upload:</p>
-							<p>To be completed</p>
-
+							{{instructions|safe}}
 						</div>
 					</div>
 				</div>				
