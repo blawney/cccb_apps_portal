@@ -29,6 +29,10 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-8">
+					
+				{% if transferred_files|length == 0 %}
+				<p>No files were transferred.</p>
+				{% endif %}
 				{% if transferred_files|length > 0 %}
 				<p>Your transfer has started.  You will receive an email upon completion, or if there was a problem with the transfer.</p>
 				<p>The following files are being transferred:</p>
