@@ -19,6 +19,7 @@ class Service(models.Model):
 	name = models.CharField(max_length=50) # a brief name
 	description = models.CharField(max_length=500) # a longer description
 	application_url = models.URLField()
+	upload_instructions = models.CharField(max_length=5000, default='', blank=True, null=True)
 
 	def __str__(self):
 		return '%s (%s)' % (self.name, self.application_url)
@@ -50,6 +51,7 @@ class Project(models.Model):
 	next_action_url = models.CharField(max_length = 255, default='')
 	has_downloads = models.BooleanField(default=False)
 	max_sample_number = models.IntegerField(default=50)
+	creation_date = models.DateTimeField(blank=True, null=True)
 	objects = ProjectManager()
 
 	def __str__(self):

@@ -16,6 +16,17 @@ from models import Service, Project
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 
+import os
+import sys
+sys.path.append(os.path.abspath('..'))
+import email_utils
+
+MESSAGE_TEMPLATE = """<html><body><p>An analysis project for iLab ID %s has been created for your email (%s).  
+			You may now begin to upload files and perform analysis</p><p><a href="%s" target="_blank">Go to CCCB Applications.</a></p>
+			<p>Note that your access will expire and <strong>files will be deleted in 30 days</strong> (on %s).</p>
+			<p>Do NOT reply to this email. Email <a href="mailto:cccb@jimmy.harvard.edu">cccb@jimmy.harvard.edu</a> with questions or comments.</p>
+			<p>CCCB Team</p>
+			</body></html>"""
 @login_required
 def setup_client(request):
 
@@ -76,11 +87,17 @@ def setup_client(request):
 				project.ilab_id = ilab_id
 				project.next_action_text = 'Upload files'
 				project.max_sample_number = max_samples
+				project.creation_date = datetime.datetime.now()
 				project.save()
 
 				project.next_action_url = reverse('choose_genome', kwargs={'project_pk':project.pk})
 				project.save()
 
+				now = project.creation_date
+				delta = datetime.timedelta(days=settings.RETENTION_DAYS)
+				later = now + delta
+				msg = MESSAGE_TEMPLATE % (project.ilab_id, email, settings.HOST ,later.strftime('%B %d, %Y'))
+				email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), msg, [email, settings.CCCB_GROUP_EMAIL], '[CCCB] Analysis project created')
 
 				# TODO send email
 				if previously_existed:
@@ -92,6 +109,7 @@ def setup_client(request):
 			success_message = ''
 
 		client_form = AddClientForm(prefix='client_form')
+
 		return render(request, 'client_setup/add_client.html', {'client_form':client_form,  'message': success_message, 'services': service_list})	
 	else: # user NOT staff
 		#return HttpResponseBadRequest('')
