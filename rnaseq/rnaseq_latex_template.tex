@@ -26,6 +26,15 @@
 
 \maketitle
 
+\section{Quickstart-- methods}
+The following paragraph is a suitable methods description of the data processing steps taken.\\
+
+Sequencing reads were aligned to the reference genome using the RNA-specific STAR aligner (version 2.5) with default parameters \cite{star}.
+FeatureCounts software \cite{featureCounts} is used to count sequencing reads mapping to annotated coding sequences (CDS) of the reference genome at the gene level.
+The counts are subsequently normalized between samples using DESeq2 \cite{deseq2}  to control for experimental sources of variation.
+Differential expression analysis was performed between the desired experimental contrasts using DESeq2 and multiple test correction was performed via the Benjamini-Hochberg procedure.
+Further details on DESeq2 processing and analysis can be found in \cite{deseq2}. 
+
 \section{Introduction}
 This report summarizes the analyses used in analyzing your data. For further questions regarding details of the analysis, please contact the CCCB.
 
@@ -66,11 +75,12 @@ Your data was aligned against the {{ref_genome_name}} genome, available at \url 
 {% if alignment_performed %}
 
 \section{Alignment}
-Alignments were performed with STAR aligner  (version 2.3.1z4) \cite{star} which is specifically designed for RNA-Seq experiments, which may include multiple splice forms and fusion transcripts.  Not all aligners produce the same results, as sequencing mistake, low--complexity sequences, variants, and other factors are treated differently and may affect the quality of the resulting alignment to the reference genome.\\
+Alignments were performed with STAR aligner  (version 2.5) \cite{star} which is specifically designed for RNA-Seq experiments, which may include multiple splice forms and fusion transcripts.  Not all aligners produce the same results, as sequencing mistake, low--complexity sequences, variants, and other factors are treated differently and may affect the quality of the resulting alignment to the reference genome.\\
 
 The output from the alignment is in a compressed, binary format-- a BAM file.  Although not often necessary, text representations of the BAM file (SAM format) may be generated with software such as samtools \cite{samtools}.\\
 
-Following the alignment, the BAM files are passed through several processing steps.  For our standard processes, we deliver three levels of BAM file:
+Following the alignment, the BAM files are passed through several processing steps.  For our standard processes, we offer three levels of BAM file. By default, we only provide 
+access to the ``primary filtered'' BAM as explained below.  The additional files can be made available upon request.  
 \begin{itemize}
 \item *.sort.bam \\
 These BAM files are sorted by genomic coordinates, which is necessary for tools such as IGV (see Section \ref{sec:igv})
@@ -105,10 +115,6 @@ Brief alignment metrics are shown below in Figures \ref{fig:relative_composition
 \end{figure}
 
 {% endif %}
-
-\section{RNA-Seq QC}
-
-RNA-Seq quality metrics are produced by the Broad Institute's RNA-SeQC tool \cite{rnaseqc} (\url{http://www.broadinstitute.org/cancer/cga/rna-seqc}).  Please see their documentation for interpretation of any figures and metrics.
 
 \section{Read quantification}
 
@@ -149,7 +155,7 @@ The concept behind RNA-Seq experiments is that we may use the relative abundance
 
 For differential expression testing, we use DESeq software, as described in Section~\ref{sec:normalization}.  In short, this assumes that read abundances for a particular gene in a particular sample follow a \emph{negative-binomial distribution}.  The goal of the analysis is to infer model parameters such as the mean and variance based on the observed data.  In particular, DESeq uses a number of techniques to obtain estimates of these parameters despite the low number of samples available in most sequencing experiments (sometimes without any replicates, although such an experimental design is not ideal for strong evidence).  Finally, using these parameters, a significance (p-value) for differential expression is calculated. For further details, please consult the publication.\\  
 
-The output files are named according to the contrast performed.  For example, \verb|X_vs_Y.sort.primary.deseq| compares group X versus group Y, treating Y as the ``base'' or ``control'' condition.  The actual order of comparison does not matter with regards to determining differential expression; it is, however, important to note the direction of differential regulation.  If the contrast is switched from your preference, then upregulation becomes downregulation and vice versa.  For example, given a file named \verb|X_vs_Y.sort.primary.deseq|, if gene YFG (Your Favorite Gene) has a fold-change of 5.3, this indicates that the expression of YFG is upregulated in condition X with respect to condition Y.  If, however, you wished to treat X as the control condition, then YFG would be downregulated at a fold-change of $1/5.3 = 0.19$.   \\
+The output files are named according to the contrast performed.  For example, \verb|X_versus_Y.deseq.tsv| compares group X versus group Y, treating Y as the ``base'' or ``control'' condition.  The actual order of comparison does not matter with regards to determining differential expression; it is, however, important to note the direction of differential regulation.  If the contrast is switched from your preference, then upregulation becomes downregulation and vice versa.  For example, given a file named \verb|X_vs_Y.sort.primary.deseq|, if gene YFG (Your Favorite Gene) has a fold-change of 5.3, this indicates that the expression of YFG is upregulated in condition X with respect to condition Y.  If, however, you wished to treat X as the control condition, then YFG would be downregulated at a fold-change of $1/5.3 = 0.19$.   \\
 
 The values in the output files are comma-separated, and may be viewed by a spreadsheet program such as Excel.  The columns are as follows:
 \begin{center}
