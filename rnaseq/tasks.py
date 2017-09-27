@@ -17,7 +17,7 @@ import pandas as pd
 LINK_ROOT = 'https://storage.cloud.google.com/%s/%s' #TODO put this in settings.py?  can a non-app access?
 
 @task(name='deseq_call')
-def deseq_call(deseq_cmd, results_dir, cloud_dge_dir, contrast_name, bucket_name, project_pk):
+def deseq_call(deseq_cmd, results_dir, cloud_dge_dir, count_matrix_filename, annotation_filename, contrast_name, bucket_name, project_pk):
 	p = subprocess.Popen(deseq_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	stdout, stderr = p.communicate()
 	if p.returncode != 0:
@@ -34,6 +34,21 @@ def deseq_call(deseq_cmd, results_dir, cloud_dge_dir, contrast_name, bucket_name
 		bucket = storage_client.get_bucket(bucket_name)
 
 		project_owner = project.owner.email
+
+		# make a cls file for GSEA:
+		raw_count_matrix_filepath = os.path.join(results_dir, count_matrix_filename)
+		df = pd.read_table(raw_count_matrix_filepath)
+		samples = df.columns.tolist()[1:] # Gene is first column
+
+		# annotation file has two columns, first is sample name second is group
+		annotations = pd.read_table(os.path.join(results_dir, annotation_filename), index_col=0)
+		group_list = annotations.ix[samples].dropna() # sorts the annotation rows to match the column order of the count matrix
+		unique_groups = group_list.ix[:,0].unique()
+		group_list_str = '\t'.join(group_list.ix[:,0]) # only column left is the group vector, so ok to use 0.  Avoids referencing by name
+		with open(os.path.join(results_dir, 'groups.cls'), 'w') as cls_outfile:
+			cls_outfile.write('%d\t%d\t1\n' % (group_list.shape[0], len(unique_groups)))
+			cls_outfile.write('#\t%s\t%s\n' % (unique_groups[0], unique_groups[1]))
+			cls_outfile.write(group_list_str + '\n')
 
 		# make some plots
 		for f in glob.glob(os.path.join(results_dir, '*deseq.tsv')):
@@ -76,6 +91,10 @@ def deseq_call(deseq_cmd, results_dir, cloud_dge_dir, contrast_name, bucket_name
 		public_link = LINK_ROOT % (bucket.name, zip_blob.name)
 		r = Resource(project=project, basename = os.path.basename(zipfile), public_link = public_link, resource_type = 'Compressed results')
 		r.save()
+
+		project.status_message = 'Completed DGE analysis'
+		project.in_progress = False
+		project.save()
 
 		message_html = """
 		<html>

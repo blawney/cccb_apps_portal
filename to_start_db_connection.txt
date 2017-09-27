@@ -1,0 +1,1 @@
+./cloud_sql_proxy -credential_file /webapps/cccb_cloud_sql_service_acct_credentials.json -instances cccb-data-delivery:us-east1:cccb-apps-db -dir /cloudsql

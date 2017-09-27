@@ -346,30 +346,50 @@ def dropbox_transfer_complete(request):
 			print 'token matched'
 			master_pk = int(request.POST.get('masterPK', ''))
 			transfer_pk = int(request.POST.get('transferPK', ''))
+			transfer_error = int(request.POST.get('error', 0))
 			try:
+				master = DropboxTransferMaster.objects.get(pk = master_pk)
 				transfer = DropboxFileTransfer.objects.get(pk=transfer_pk)
 				transfer.is_complete = True
-				transfer.save()
-				master = DropboxTransferMaster.objects.get(pk = master_pk)
-
-				# register that file has been transferred to block multiple downloads
-				source = transfer.source # the https link
-				resource_list = Resource.objects.filter(public_link=source)
-				if len(resource_list) == 1:
-					rd = ResourceDownload(resource=resource_list[0], downloader=master.owner, download_date=datetime.datetime.now())
-					rd.save()
+				if transfer_error == 1:
+					transfer.was_success = False
 				else:
-					print 'Problem!  Got a resource list that was not of length=1.'
-					print resource_list
+					transfer.was_success = True
+
+					# register that file has been transferred to block multiple downloads
+					source = transfer.source # the https link
+					resource_list = Resource.objects.filter(public_link=source)
+					if len(resource_list) == 1:
+						rd = ResourceDownload(resource=resource_list[0], downloader=master.owner, download_date=datetime.datetime.now())
+						rd.save()
+					else:
+						print 'Problem!  Got a resource list that was not of length=1.'
+						print resource_list
+				transfer.save()
 
 				all_transfers = master.dropboxfiletransfer_set.all()
+				# all transfers done, but not necessarily successful
 				if all([x.is_complete for x in all_transfers]):
-					print 'delete transfer master'
-					li_string = ''.join(['<li>%s</li>' % os.path.basename(x.source) for x in all_transfers])
-					msg = "<html><body>Your file transfer to Dropbox has completed!  The following files should now be in your Dropbox:<ul>%s</ul></body></html>" % li_string
-					# note that the email has to be nested in a list
-					print 'will send msg: %s\n to: %s' % (msg,master.owner.email)
-					email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), msg, [master.owner.email,], '[CCCB] Dropbox transfer complete')
+					if all([x.was_success for x in all_transfers]):
+						li_string = ''.join(['<li>%s</li>' % os.path.basename(x.source) for x in all_transfers])
+						msg = "<html><body>Your file transfer to Dropbox has completed!  The following files should now be in your Dropbox:<ul>%s</ul></body></html>" % li_string
+						email_subject = '[CCCB] Dropbox transfer complete'
+					else: # some failed
+						successful_transfers = [x for x in all_transfers if x.was_success]
+						failed_transfers = [x for x in all_transfers if not x.was_success]
+						success_li_string = ''.join(['<li>%s</li>' % os.path.basename(x.source) for x in successful_transfers])
+						failed_li_string = ''.join(['<li>%s</li>' % os.path.basename(x.source) for x in failed_transfers])
+						msg = """<html><body>Your file transfer to Dropbox has experienced an issue."""
+						if len(successful_transfers) > 0:
+							msg += """The following files were successfully transferred and should now be in your Dropbox:
+								<ul>%s</ul>""" % success_li_string
+						if len(failed_transfers) > 0:
+							msg += """The following transfers failed and you may try again.  The CCCB has also received an error message.
+							<ul>%s</ul>""" % failed_li_string
+						msg += "</body></html>"
+						email_subject = '[CCCB] Problem with Dropbox transfer'
+					email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), msg, [master.owner.email,], email_subject)
+
 					master.delete()
 				else:
 					print 'wait for other transfers to complete'

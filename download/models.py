@@ -13,7 +13,7 @@ class Resource(models.Model):
         resource_type = models.CharField(max_length=100)
 
 	def __str__(self):
-		return '%s(%s)' % (self.basename, self.bucket.name)
+		return '%s(%s)' % (self.basename, self.project.bucket)
 
 
 class DropboxTransferMaster(models.Model):
@@ -28,6 +28,7 @@ class DropboxFileTransfer(models.Model):
 	start_time = models.DateTimeField(blank=True, null=True)
 	finish_time = models.DateTimeField(blank=True, null=True)
 	is_complete = models.BooleanField(default=False)
+	was_success = models.BooleanField(default=False) # flag in case of error
 	source = models.CharField(max_length = 500, default='')
 
 

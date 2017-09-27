@@ -14,7 +14,7 @@
                                     <th>Name</th>
                                     <th>Type</th>
                                     <th>Status</th>
-                                    <th>Completed</th>
+                                    <!--<th>Completed</th>-->
                                     <th>Actions</th>
                                     <th>Downloads</th>
                                 </tr>
@@ -25,7 +25,7 @@
                                     <td>{{p.name}}</td>
                                     <td>{{p.service}}</td>
                                     <td>
-                                        {% if p.completed %}
+                                        {% if p.completed and not p.in_progress%}
                                         <span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span>
 					<span>{{p.status_message}}</span>
                                         {% elif p.in_progress %}
@@ -37,6 +37,7 @@
                                         <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
                                         {% endif %}
                                     </td>
+				<!--
                                     <td>
                                         {% if p.completed %} 
                                         <span>{{p.finish_time}}</span>
@@ -44,6 +45,7 @@
                                         <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
                                         {% endif %}
                                     </td>
+				-->
 				    <td>
 						{{p.next_action_text}}
 						<a href="{{p.next_action_url}}">
