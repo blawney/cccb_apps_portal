@@ -297,6 +297,8 @@ def kickoff(request, project_pk):
 				project.in_progress = True
 				project.start_time = datetime.datetime.now()
 				project.status_message = 'Performing alignments'
+				project.next_action_text = 'Processing...'
+				project.next_action_url = reverse('in_progress_view', kwargs={'project_pk':pk})
 				project.save()
 			elif project.service.name == 'variant_calling_from_bam':
 				pk = project.pk
