@@ -25,7 +25,8 @@ def deseq_call(deseq_cmd, results_dir, cloud_dge_dir, count_matrix_filename, ann
 			fout.write('STDOUT:\n%s\n' % stdout)
 			fout.write('STDERR:\n%s' % stderr)
 		#TODO send error email to CCCB
-		email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), "There was a problem with the deseq analysis.  Check the %s directory" % results_dir, settings.CCCB_EMAILS, '[CCCB] Problem with DGE script')
+		email_list = [x.strip() for x in settings.CCCB_EMAIL_CSV.split(',')]
+		email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), "There was a problem with the deseq analysis.  Check the %s directory" % results_dir, email_list, '[CCCB] Problem with DGE script')
 	else:
 
 		project = Project.objects.get(pk=project_pk)
