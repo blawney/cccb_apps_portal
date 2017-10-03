@@ -108,7 +108,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'HOST': '/cloudsql/%s:%s:%s' % (config_parser.get(environment, 'google_project'), \
-                                        config_parser.get(environment, 'google_default_zone'), \
+                                        config_parser.get(environment, 'google_default_region'), \
                                         config_parser.get(environment, 'cloud_sql_db')),
         'NAME': config_parser.get(environment, 'db_name'),
         'USER': config_parser.get(environment, 'db_user'),
@@ -211,7 +211,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 # emails to let CCCB staff know about problems:
 CCCB_EMAIL_CSV = config_parser.get(environment, 'cccb_email_csv')
 
-drive_cred_file = os.path.basename(config_parser(environment, 'google_drive_credentials_json'))
+drive_cred_file = os.path.basename(config_parser.get(environment, 'google_drive_credentials_json'))
 DRIVE_CREDENTIALS = os.path.join(CREDENTIAL_DIR, drive_cred_file)
 
 # for communicating between VMs internally, we use keys to avoid junk requests
@@ -235,7 +235,7 @@ PUBLIC_STORAGE_ROOT = 'https://storage.cloud.google.com/'
 GOOGLE_DEFAULT_ZONE = config_parser.get(environment, 'google_default_zone')
 GOOGLE_BUCKET_PREFIX = 'gs://'
 STARTUP_SCRIPT_BUCKET = config_parser.get(environment, 'startup_script_bucket')
-gmail_cred_file = os.path.basename(config_parser(environment, 'gmail_credentials_json'))
+gmail_cred_file = os.path.basename(config_parser.get(environment, 'gmail_credentials_json'))
 GMAIL_CREDENTIALS = os.path.join(CREDENTIAL_DIR, gmail_cred_file)
 EMAIL_UTILS = 'email_utils.py'
 CCCB_GROUP_EMAIL = config_parser.get(environment, 'cccb_group_email')
