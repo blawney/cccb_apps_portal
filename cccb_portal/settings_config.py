@@ -191,7 +191,7 @@ ACCESS_TOKEN_URI = 'https://accounts.google.com/o/oauth2/token'
 USER_INFO_URI = 'https://www.googleapis.com/oauth2/v1/userinfo'
 
 # default pwd for creating users.  In reality, users will authenticate against google, but when we create a user, we g$
-DEFAULT_PWD = config_params.get(environment, 'default_pwd', raw=True)
+DEFAULT_PWD = config_parser.get(environment, 'default_pwd', raw=True)
 TEMP_DIR = os.path.join(BASE_DIR, 'temp')
 
 # regular expression for matching fastq files:
