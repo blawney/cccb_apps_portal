@@ -42,7 +42,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config_parser.get(environment, 'django_secret')
+SECRET_KEY = config_parser.get(environment, 'django_secret', raw=True)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config_parser.getboolean(environment, 'debug')
@@ -184,14 +184,14 @@ STORAGE_API_URI = 'https://storage.googleapis.com'
 # some settings related to authenticating with google (Oauth2 credentials):
 GOOGLE_AUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth'
 GOOGLE_CLIENT_ID = config_parser.get(environment, 'oauth2_client')
-GOOGLE_CLIENT_SECRET = config_parser.get(environment, 'oauth2_secret')
+GOOGLE_CLIENT_SECRET = config_parser.get(environment, 'oauth2_secret', raw=True)
 GOOGLE_REGISTERED_CALLBACK = os.path.join(HOST, 'callback/')
 AUTH_SCOPE = 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
 ACCESS_TOKEN_URI = 'https://accounts.google.com/o/oauth2/token'
 USER_INFO_URI = 'https://www.googleapis.com/oauth2/v1/userinfo'
 
 # default pwd for creating users.  In reality, users will authenticate against google, but when we create a user, we g$
-DEFAULT_PWD = config_params.get(environment, 'default_pwd')
+DEFAULT_PWD = config_params.get(environment, 'default_pwd', raw=True)
 TEMP_DIR = os.path.join(BASE_DIR, 'temp')
 
 # regular expression for matching fastq files:
@@ -215,15 +215,15 @@ drive_cred_file = os.path.basename(config_parser(environment, 'google_drive_cred
 DRIVE_CREDENTIALS = os.path.join(CREDENTIAL_DIR, drive_cred_file)
 
 # for communicating between VMs internally, we use keys to avoid junk requests
-TOKEN = config_parser.get(environment, 'comm_token')
-ENCRYPTION_KEY = config_parser.get(environment, 'encryption_key')
+TOKEN = config_parser.get(environment, 'comm_token', raw=True)
+ENCRYPTION_KEY = config_parser.get(environment, 'encryption_key', raw=True)
 
 #dropbox parameters:
 DROPBOX_AUTH_ENDPOINT = 'https://www.dropbox.com/oauth2/authorize'
 DROPBOX_TOKEN_ENDPOINT = 'https://api.dropboxapi.com/oauth2/token'
 DROPBOX_REGISTERED_CALLBACK = HOST + '/dbx-callback'
-DROPBOX_KEY=config_parser.get(environment, 'dropbox_key')
-DROPBOX_SECRET=config_parser.get(environment, 'dropbox_secret')
+DROPBOX_KEY=config_parser.get(environment, 'dropbox_key', raw=True)
+DROPBOX_SECRET=config_parser.get(environment, 'dropbox_secret', raw=True)
 DROPBOX_TRANSFER_IMAGE = 'dropbox-transfer-image-v2' # the name of the google machine image
 DROPBOX_TRANSFER_MIN_DISK_SIZE = 10
 DROPBOX_COMPLETE_CALLBACK = 'dropbox-transfer-complete'
