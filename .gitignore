@@ -7,4 +7,3 @@ credentials
 gmail_credentials.json
 migrations
 cloud_sql_proxy
-__init__.py
