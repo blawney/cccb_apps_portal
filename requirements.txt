@@ -29,6 +29,7 @@ gsutil==4.24
 httplib2==0.10.3
 idna==2.5
 ipaddress==1.0.18
+Jinja2==2.9.6
 kombu==4.0.2
 matplotlib==2.0.2
 mock==2.0.0
