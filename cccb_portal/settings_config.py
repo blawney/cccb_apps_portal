@@ -149,11 +149,13 @@ USE_L10N = True
 
 USE_TZ = True
 
+# For uploads and serving static files:
+STORAGE_API_URI = 'https://storage.googleapis.com'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
-
-STATIC_URL = '/static/'
+static_files_bucket = config_parser.get(environment, 'static_files_bucket')
+STATIC_URL = '%s/%s/static/' % (STORAGE_API_URI, static_files_bucket)
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')]
 
@@ -177,9 +179,6 @@ CREDENTIAL_DIR = os.path.join(BASE_DIR, 'credentials')
 # json file with service account credentials
 svc_acct_filename = os.path.basename(config_parser.get(environment, 'service_account_credentials_json'))
 SERVICE_ACCOUNT_CREDENTIALS = os.path.join(CREDENTIAL_DIR, svc_acct_filename)
-
-# For uploads:
-STORAGE_API_URI = 'https://storage.googleapis.com'
 
 # some settings related to authenticating with google (Oauth2 credentials):
 GOOGLE_AUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth'
