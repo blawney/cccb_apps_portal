@@ -171,8 +171,12 @@ BUCKET_PREFIX = 'cccb-app-service'
 # the "subdirectory" where the uploaded files will be placed (inside the project's bucket)
 UPLOAD_PREFIX = 'uploads'
 
+# the name of the directory where we hold the credentials:
+CREDENTIAL_DIR = os.path.join(BASE_DIR, 'credentials')
+
 # json file with service account credentials
-SERVICE_ACCOUNT_CREDENTIALS = config_parser.get(environment, 'service_account_credentials_json')
+svc_acct_filename = os.path.basename(config_parser.get(environment, 'service_account_credentials_json'))
+SERVICE_ACCOUNT_CREDENTIALS = os.path.join(CREDENTIAL_DIR, svc_acct_filename)
 
 # For uploads:
 STORAGE_API_URI = 'https://storage.googleapis.com'
@@ -196,7 +200,6 @@ FASTQ_GZ_PATTERN = '_[rR][1,2].f.*gz'
 # regular expression for matching BAM files:
 BAMFILE_PATTERN = '.bam'
 
-
 #Celery settings:
 #CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_BROKER_URL = 'redis://localhost:6379'
@@ -208,7 +211,8 @@ CELERY_RESULT_SERIALIZER = 'json'
 # emails to let CCCB staff know about problems:
 CCCB_EMAIL_CSV = config_parser.get(environment, 'cccb_email_csv')
 
-DRIVE_CREDENTIALS = os.path.join(BASE_DIR, 'credentials', 'google_drive_credentials.json')
+drive_cred_file = os.path.basename(config_parser(environment, 'google_drive_credentials_json'))
+DRIVE_CREDENTIALS = os.path.join(CREDENTIAL_DIR, drive_cred_file)
 
 # for communicating between VMs internally, we use keys to avoid junk requests
 TOKEN = config_parser.get(environment, 'comm_token')
@@ -231,7 +235,8 @@ PUBLIC_STORAGE_ROOT = 'https://storage.cloud.google.com/'
 GOOGLE_DEFAULT_ZONE = config_parser.get(environment, 'google_default_zone')
 GOOGLE_BUCKET_PREFIX = 'gs://'
 STARTUP_SCRIPT_BUCKET = config_parser.get(environment, 'startup_script_bucket')
-GMAIL_CREDENTIALS = config_parser.get(environment, 'gmail_credentials_json')
+gmail_cred_file = os.path.basename(config_parser(environment, 'gmail_credentials_json'))
+GMAIL_CREDENTIALS = os.path.join(CREDENTIAL_DIR, gmail_cred_file)
 EMAIL_UTILS = 'email_utils.py'
 CCCB_GROUP_EMAIL = config_parser.get(environment, 'cccb_group_email')
 
