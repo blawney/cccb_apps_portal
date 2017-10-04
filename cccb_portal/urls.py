@@ -22,6 +22,7 @@ import dropbox_utils
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    url(r'^_ah/health', views.health_check),
     url(r'^cccb-admin/', include('client_setup.urls')),
     url(r'^$', views.index),
     url(r'^analysis/', include('analysis_portal.urls')),

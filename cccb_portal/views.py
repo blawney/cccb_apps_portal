@@ -17,6 +17,15 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
 
+
+def health_check(request):
+	"""
+	Does some checks to make sure everything is working as expected.  This is checked by the load balancer
+	TODO: add actual checks.  
+	"""
+	return HttpResponse('')
+
+
 @login_required
 def index(request):
 	# this will direct users to the login page
