@@ -150,6 +150,7 @@ USE_L10N = True
 USE_TZ = True
 
 # For uploads and serving static files:
+URL_SIGNER_CREDENTIALS = os.getenv('SERVICE_ACCOUNT_CREDENTIALS')
 STORAGE_API_URI = 'https://storage.googleapis.com'
 
 # Static files (CSS, JavaScript, Images)
