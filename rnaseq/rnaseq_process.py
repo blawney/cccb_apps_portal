@@ -129,7 +129,7 @@ def launch_workers(compute, project, result_bucket_name, sample_mapping, config_
         kwargs['result_bucket_name'] = config_params['gs_prefix'] + result_bucket_name
         kwargs['reference_genome'] = config_params['reference_genome']
         kwargs['email_utils'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['email_utils'])
-        kwargs['email_credentials'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['email_credentials'])
+        kwargs['email_credentials'] = settings.GMAIL_CREDENTIALS_CLOUD
         kwargs['sample_name'] = sample_tuple[1] 
         kwargs['genome_config_path'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['genome_config_file'])
         kwargs['align_script_template'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['align_script_template'])
@@ -137,11 +137,11 @@ def launch_workers(compute, project, result_bucket_name, sample_mapping, config_
         kwargs['sample_pk'] = sample_tuple[0]
         kwargs['callback_url'] = '%s/%s' % (settings.HOST, CALLBACK_URL)
         kwargs['startup_script'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['startup_script'])
-        kwargs['notification_email_addresses'] = config_params['notification_email_addresses']
+        kwargs['notification_email_addresses'] = settings.CCCB_EMAIL_CSV
         kwargs['token'] = settings.TOKEN
         kwargs['enc_key'] = settings.ENCRYPTION_KEY
         instance_name = 'worker-%s-%s' % (sample_tuple[1].lower().replace('_','-'), datetime.datetime.now().strftime('%m%d%y%H%M%S'))
-        launch_custom_instance(compute, config_params['google_project'], config_params['default_zone'], instance_name, kwargs, config_params)
+        launch_custom_instance(compute, settings.GOOGLE_PROJECT, config_params['default_zone'], instance_name, kwargs, config_params)
 
 
 def launch_custom_instance(compute, google_project, zone, instance_name, kwargs, config_params):
@@ -162,8 +162,7 @@ def launch_custom_instance(compute, google_project, zone, instance_name, kwargs,
     notification_email_addresses = kwargs['notification_email_addresses']
     token = kwargs['token']
     enc_key = kwargs['enc_key']
-    source_disk_image = 'projects/%s/global/images/%s' % (config_params['google_project'], config_params['image_name'])
-
+    source_disk_image = config_params['image_name']
     machine_type = "zones/%s/machineTypes/%s" % (zone, config_params['machine_type']) 
 
     config = {
@@ -237,7 +236,7 @@ def launch_custom_instance(compute, google_project, zone, instance_name, kwargs,
             },
             {
               'key':'google_project',
-              'value': config_params['google_project']
+              'value': google_project
             },
             {
               'key':'google_zone',
