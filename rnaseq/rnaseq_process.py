@@ -55,7 +55,7 @@ def setup(project_pk, config_params):
     # get datasources from db:
     datasources = project.datasource_set.all()
     datasource_paths = [os.path.join(bucket_name, x.filepath) for x in datasources]
-    datasource_paths = [config_params['gs_prefix'] + x for x in datasource_paths]
+    datasource_paths = [settings.GOOGLE_BUCKET_PREFIX + x for x in datasource_paths]
 
     # check that those datasources exist in the actual bucket
     storage_client = storage.Client()
@@ -115,7 +115,7 @@ def launch_workers(compute, project, result_bucket_name, sample_mapping, config_
 
     input_bucket_name = project.bucket
     for sample_tuple, ds_list in sample_mapping.items():
-        file_list = sorted([config_params['gs_prefix'] + os.path.join(input_bucket_name, ds.filepath) for ds in ds_list])
+        file_list = sorted([settings.GOOGLE_BUCKET_PREFIX + os.path.join(input_bucket_name, ds.filepath) for ds in ds_list])
         kwargs = {}
         kwargs['r1_fastq'] = file_list[0]
         kwargs['r2_fastq'] = ''
@@ -126,22 +126,22 @@ def launch_workers(compute, project, result_bucket_name, sample_mapping, config_
             #TODO: something weird happened
             pass
         # now add the other params to the dictionary:
-        kwargs['result_bucket_name'] = config_params['gs_prefix'] + result_bucket_name
+        kwargs['result_bucket_name'] = settings.GOOGLE_BUCKET_PREFIX + result_bucket_name
         kwargs['reference_genome'] = config_params['reference_genome']
-        kwargs['email_utils'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['email_utils'])
+        kwargs['email_utils'] = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['email_utils'])
         kwargs['email_credentials'] = settings.GMAIL_CREDENTIALS_CLOUD
         kwargs['sample_name'] = sample_tuple[1] 
-        kwargs['genome_config_path'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['genome_config_file'])
-        kwargs['align_script_template'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['align_script_template'])
+        kwargs['genome_config_path'] = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['genome_config_file'])
+        kwargs['align_script_template'] = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['align_script_template'])
         kwargs['project_pk'] = project.pk
         kwargs['sample_pk'] = sample_tuple[0]
         kwargs['callback_url'] = '%s/%s' % (settings.HOST, CALLBACK_URL)
-        kwargs['startup_script'] = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['startup_script'])
+        kwargs['startup_script'] = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['startup_script'])
         kwargs['notification_email_addresses'] = settings.CCCB_EMAIL_CSV
         kwargs['token'] = settings.TOKEN
         kwargs['enc_key'] = settings.ENCRYPTION_KEY
         instance_name = 'worker-%s-%s' % (sample_tuple[1].lower().replace('_','-'), datetime.datetime.now().strftime('%m%d%y%H%M%S'))
-        launch_custom_instance(compute, settings.GOOGLE_PROJECT, config_params['default_zone'], instance_name, kwargs, config_params)
+        launch_custom_instance(compute, settings.GOOGLE_PROJECT, settings.GOOGLE_DEFAULT_ZONE, instance_name, kwargs, config_params)
 
 
 def launch_custom_instance(compute, google_project, zone, instance_name, kwargs, config_params):
@@ -240,7 +240,7 @@ def launch_custom_instance(compute, google_project, zone, instance_name, kwargs,
             },
             {
               'key':'google_zone',
-              'value': config_params['default_zone']
+              'value': zone
             },
             {
               'key':'project_pk',
@@ -277,7 +277,9 @@ def launch_custom_instance(compute, google_project, zone, instance_name, kwargs,
           ]
         }
     }
-
+    print 'x'*20
+    print config
+    print 'x'*20
     return compute.instances().insert(
         project=google_project,
         zone=zone,
