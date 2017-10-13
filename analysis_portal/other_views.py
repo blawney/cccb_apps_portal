@@ -21,7 +21,7 @@ from client_setup.models import Project
 @login_required
 def show_in_progress(request, project_pk):
 	project = helpers.check_ownership(project_pk, request.user)
-	if project:
+	if project and project.in_progress:
 		start_date = project.start_time.strftime('%b %d, %Y')
 		start_time = project.start_time.strftime('%H:%M')
 		time_str = 'Started on %s at %s' % (start_date, start_time)

@@ -458,7 +458,7 @@ def finish(project):
     # concatenate count files
     local_dir = os.path.join(settings.TEMP_DIR, bucket.name)
     try:
-        os.mkdir(local_dir)
+        os.makedirs(local_dir)
     except OSError as ex:
         if ex.errno == 17:
             pass

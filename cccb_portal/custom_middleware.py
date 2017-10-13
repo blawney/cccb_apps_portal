@@ -28,11 +28,9 @@ class ProjecStatusMiddleWare(object):
 		# if requesting information about a specific project
 		if 'project_pk' in view_kwargs:
 			try:
-				print 'in mwware'
 				project_pk = int(view_kwargs['project_pk'])
 				project = Project.objects.get(pk=project_pk)
 				if project.owner == user:
-					print 'was owner'
 					if project.in_progress and is_setup_view:
 						return redirect('in_progress_view', project_pk = project_pk)
 					elif project.completed and is_setup_view:
