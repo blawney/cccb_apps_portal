@@ -224,7 +224,7 @@ DROPBOX_TOKEN_ENDPOINT = 'https://api.dropboxapi.com/oauth2/token'
 DROPBOX_REGISTERED_CALLBACK = HOST + '/dbx-callback'
 DROPBOX_KEY=config_parser.get(environment, 'dropbox_key', raw=True)
 DROPBOX_SECRET=config_parser.get(environment, 'dropbox_secret', raw=True)
-DROPBOX_TRANSFER_IMAGE = 'dropbox-transfer-image-v2' # the name of the google machine image
+DROPBOX_TRANSFER_IMAGE = 'projects/cccb-data-delivery/global/images/dropbox-transfer-image-v2' # the name of the google machine image
 DROPBOX_TRANSFER_MIN_DISK_SIZE = 10
 DROPBOX_COMPLETE_CALLBACK = 'dropbox-transfer-complete'
 DROPBOX_DEFAULT_DOWNLOAD_FOLDER = 'cccb_transfers'
