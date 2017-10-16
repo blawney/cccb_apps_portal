@@ -6,7 +6,6 @@ import glob
 import json
 import urllib
 import urllib2
-from ConfigParser import SafeConfigParser
 import sys
 import datetime
 import re
@@ -22,24 +21,12 @@ from download.models import Resource
 from django.conf import settings
 from django.urls import reverse
 
+import config_parser
 import plot_methods
 
-CONFIG_FILE = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'config.cfg')
+from . import tasks
+
 CALLBACK_URL = 'analysis/notify/'
-
-DEFAULT_FILTER_LEVELS = ['sort.primary',]
-RAW_COUNT_PREFIX = 'raw_counts'
-DGE_FOLDER = 'dge'
-STAR_LOG_SUFFIX = '.Log.final.out'
-MAPPING_COMPOSITION_PLOT = 'mapping_composition.pdf'
-TOTAL_READS_PLOT = 'total_reads.pdf'
-
-def parse_config():
-    with open(CONFIG_FILE) as cfg_handle:
-        parser = SafeConfigParser()
-        parser.readfp(cfg_handle)
-        return parser.defaults()
-
 
 def setup(project_pk, config_params):
     
@@ -287,260 +274,10 @@ def launch_custom_instance(compute, google_project, zone, instance_name, kwargs,
 
 
 def start_analysis(project_pk):
-    config_params = parse_config()
+    config_params = config_parser.parse_config()
     project, result_bucket_name, sample_mapping = setup(project_pk, config_params)
     compute = googleapiclient.discovery.build('compute', 'v1')
     launch_workers(compute, project, result_bucket_name, sample_mapping, config_params)
-
-
-def create_merged_counts(bucket, countfile_objs, local_dir):
-    """
-    Downloads and concatenates the count files into a raw count matrix
-    """
-
-    # download the files
-    countfile_paths = []
-    for cf in countfile_objs:
-        filepath = os.path.join(local_dir, os.path.basename(cf.name))
-        print 'download from %s to %s' % (cf.name, filepath)
-        cf.download_to_filename(filepath)
-        countfile_paths.append(filepath)
-
-    # concatenate the different 'levels' of count file
-    styles = ['.'.join(x.split('.')[1:-1]) for x in countfile_paths]
-    df = pd.DataFrame({'files':countfile_paths, 'filetype':styles})
-    d = {}
-    for grouping, f in df.groupby('filetype'):
-        d[grouping] = sorted(f.files.tolist())
-
-    # subset the count 'levels' so we don't confuse the users with too many files.  Just pick the ones corresponding to DEFAULT_FILTER_LEVELS
-    d2 = {}
-    for level in DEFAULT_FILTER_LEVELS:
-        d2[level] = d[level]
-
-    raw_count_files = []
-    for k,files in d2.items():
-        overall = pd.DataFrame()
-        outfile = os.path.join(local_dir, '%s.%s.tsv' % (RAW_COUNT_PREFIX, k))
-        cols = []
-        for f in files:
-            cols.append(os.path.basename(f).split('.')[0])
-            df = pd.read_table(f, skiprows=1, index_col=0)
-            df = df.ix[:,-1]
-            overall = pd.concat([overall, df], axis=1)
-        overall.columns = cols
-        overall.to_csv(outfile, sep='\t', index_label='Gene')
-        raw_count_files.append(outfile)
-    return raw_count_files
-
-def get_log_contents(f):
-    """
-    Parses the star-created Log file to get the mapping stats.
-    Input: filepath to Log file
-    Output: dictionary mapping 'log terms' to the values
-    """
-    d = {}
-    for line in open(f):
-        try:
-            key, val = line.strip().split('|')
-            d[key.strip()] = val.strip()
-        except ValueError as ex:
-            pass
-    return d
-
-def make_qc_report(logfile_objs, local_dir):
-    """
-    Make a PDF QC report with latex
-    """
-    # download the log files
-    logfile_paths = []
-    for lf in logfile_objs:
-        filepath = os.path.join(local_dir, os.path.basename(lf.name))
-        print 'download from %s to %s' % (lf.name, filepath)
-        lf.download_to_filename(filepath)
-        logfile_paths.append(filepath)
-
-    # get the log contents and store them in a dictionary keyed by the sample name
-    log_data = {}
-    for log in logfile_paths:
-        sample = os.path.basename(log)[:-len(STAR_LOG_SUFFIX)]
-        log_data[sample] = get_log_contents(log)
-
-    # plot the read composition (uniquely, multi-mapped, etc)
-    targets =[ 'Uniquely mapped reads %', '% of reads mapped to multiple loci', '% of reads mapped to too many loci', '% of reads unmapped: too many mismatches', '% of reads unmapped: too short', '% of reads unmapped: other']
-    mapping_composition_colors = ['#504244', '#84C85C', '#A663B7', '#C2504C', '#95B8B8', '#B59547']
-    plot_methods.plot_read_composition(log_data, targets, os.path.join(local_dir, MAPPING_COMPOSITION_PLOT), mapping_composition_colors)
-
-    # plot the total number of reads:
-    plot_methods.plot_total_read_count(log_data, os.path.join(local_dir, TOTAL_READS_PLOT))
-
-    # copy the teX and other files over to the local folder:
-    this_dir = os.path.dirname(os.path.realpath(__file__))
-    shutil.copyfile(os.path.join(this_dir, 'report_template.tex'), os.path.join(local_dir, 'report.tex'))
-    shutil.copyfile(os.path.join(this_dir, 'references.bib'), os.path.join(local_dir, 'references.bib'))
-    shutil.copyfile(os.path.join(this_dir, 'igv_duplicates.png'), os.path.join(local_dir, 'igv_duplicates.png'))
-    shutil.copyfile(os.path.join(this_dir, 'igv_typical.png'), os.path.join(local_dir, 'igv_typical.png'))
-
-    compile_script = os.path.join(this_dir, 'compile.sh')
-    args = [compile_script, local_dir, 'report']
-    p = subprocess.Popen(args, stdout = subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = p.communicate()
-    print 'STDOUT from latex compile script: %s' % stdout
-    print 'STDERR from latex compile script: %s' % stderr
-    if p.returncode != 0:
-        print 'Error running the compile script for the latex report.'
-        raise Exception('Error running the compile script for the latex report.')
-        # the compiled report is simply the project name with the '.pdf' suffix
-    pdf_report_path = os.path.join(local_dir, 'report.pdf')
-    return pdf_report_path
-
-def finish(project):
-    """
-    This pulls together everything and gets it ready for download
-    """
-    config_params = parse_config()
-
-    LINK_ROOT = 'https://storage.cloud.google.com/%s/%s' #TODO put this in settings.py?  can a non-app access?
-
-    all_samples = project.sample_set.all()
-    
-    storage_client = storage.Client()
-    bucket_name = project.bucket
-    bucket = storage_client.get_bucket(bucket_name)
-    all_contents = bucket.list_blobs()
-    all_contents = [x for x in all_contents] # turn the original iterator into a list
-
-    print 'all contents: %s' % all_contents
-    # find all the BAM files (note regex below-- could expose a subset of the BAM files for ease)
-    bam_objs = []
-    for fl in DEFAULT_FILTER_LEVELS:
-        bam_pattern = '%s/.*%s.bam$' % (config_params['output_bucket'],fl)
-        bam_objs.extend([x for x in all_contents if re.match(bam_pattern, x.name) is not None])
-
-        # also add the .bai files:
-        bai_pattern = '%s/.*%s.bam.bai$' % (config_params['output_bucket'],fl)
-        bam_objs.extend([x for x in all_contents if re.match(bai_pattern, x.name) is not None])
-
-    # add user's privileges to these:
-    for b in bam_objs:
-        print 'grant ownership on bam %s' % b
-        acl = b.acl
-        entity = acl.user(project.owner.email)
-        entity.grant_read()
-        acl.save()
-
-        # register the BAM files with the download app
-        public_link = LINK_ROOT % (bucket.name, b.name)
-        r = Resource(project=project, basename = os.path.basename(b.name), public_link = public_link, resource_type = 'BAM Files')
-        r.save()
-
-        set_meta_cmd = 'gsutil setmeta -h "Content-Disposition: attachment; filename=%s" gs://%s/%s' % (os.path.basename(b.name), bucket_name, b.name)
-        print 'set meta cmd: %s' % set_meta_cmd
-        process = subprocess.Popen(set_meta_cmd, shell = True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-        stdout, stderr = process.communicate()
-        if process.returncode != 0:
-             print 'Error while setting metadata on bam %s. STDERR was:\n %s' % (b.name, stderr)
-             raise Exception('Error during gsutil upload module.')
-
-
-    # find all the count files
-    countfile_objs = []
-    for fl in DEFAULT_FILTER_LEVELS:
-        countfiles_pattern = '%s/.*%s.counts$' % (config_params['output_bucket'], fl)
-        countfile_objs.extend([x for x in all_contents if re.match(countfiles_pattern, x.name) is not None])
-    # add user's privileges to these:
-    for b in countfile_objs:
-        acl = b.acl
-        entity = acl.user(project.owner.email)
-        entity.grant_read()
-        acl.save()
-
-    # concatenate count files
-    local_dir = os.path.join(settings.TEMP_DIR, bucket.name)
-    try:
-        os.makedirs(local_dir)
-    except OSError as ex:
-        if ex.errno == 17:
-            pass
-        else:
-            print ex.message
-            raise ex
-    raw_count_filepaths = create_merged_counts(bucket, countfile_objs, local_dir)
-
-    # upload count files for use when performing DGE analysis
-    for rc in raw_count_filepaths:
-        destination = os.path.join(config_params['output_bucket'], DGE_FOLDER, os.path.basename(rc))
-        rc_blob = bucket.blob(destination)
-        rc_blob.upload_from_filename(rc)
-
-
-
-    # make some plots/QC
-    star_log_pattern = '.*%s$' % STAR_LOG_SUFFIX
-    star_logs = [x for x in all_contents if re.match(star_log_pattern, x.name) is not None]
-    report_pdf_path = make_qc_report(star_logs, local_dir)
-
-    # grab the raw count files:
-    local_files_to_zip = []
-    local_files_to_zip.extend(glob.glob(os.path.join(local_dir, '%s*' % RAW_COUNT_PREFIX)))
-    local_files_to_zip.append(report_pdf_path)
-
-    # zip them up:
-    #zipfile = os.path.join(local_dir, bucket_name + '-results.zip') 
-    timestamp = datetime.datetime.now().strftime('%m%d%y%H%M%S')
-    zipfile = os.path.join(local_dir, 'alignment-results.%s.zip' % timestamp) 
-    
-    zip_cmd = 'zip -j %s %s' % (zipfile, ' '.join(local_files_to_zip))
-    print 'zip up using command: %s' % zip_cmd
-    p = subprocess.Popen(zip_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    stdout, sterr = p.communicate()
-    if p.returncode != 0:
-        #TODO: send email to cccb?  Shouldn't happen and not a user error.
-        pass
-
-    # upload the archive and give it permissions:
-    destination = os.path.join(config_params['output_bucket'], os.path.basename(zipfile))
-    zip_blob = bucket.blob(destination)
-    zip_blob.upload_from_filename(zipfile)
-    acl = zip_blob.acl
-    entity = acl.user(project.owner.email)
-    entity.grant_read()
-    acl.save()
-
-    # change the metadata so the download does not append the path 
-    set_meta_cmd = 'gsutil setmeta -h "Content-Disposition: attachment; filename=%s" gs://%s/%s' % (os.path.basename(zipfile), bucket_name, destination)
-    process = subprocess.Popen(set_meta_cmd, shell = True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    if process.returncode != 0:
-        print 'There was an error while setting the metadata on the zipped archive with gsutil.  Check the logs.  STDERR was:%s' % stderr
-        raise Exception('Error during gsutil upload module.')
-
-    shutil.rmtree(local_dir)
-
-    # register the zip archive with the download app
-    public_link = LINK_ROOT % (bucket.name, zip_blob.name)
-    r = Resource(project=project, basename = os.path.basename(zipfile), public_link = public_link, resource_type = 'Compressed results')
-    r.save()
-
-    # notify the client
-    # the second arg is supposedd to be a list of emails
-    print 'send notification email'
-    message_html = write_completion_message(project)
-    email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), message_html, [project.owner.email,], '[CCCB] Your RNA-Seq analysis has completed')
-
-
-def write_completion_message(project):
-    message_html = """\
-    <html>
-      <head></head>
-      <body>
-          <p>
-            Your RNA-Seq analysis (%s) is complete!  Log-in to the CCCB application site to view and download your results.
-          </p>
-      </body>
-    </html>
-    """ % project.name
-    return message_html
 
 
 def handle(project, request):
@@ -569,4 +306,4 @@ def handle(project, request):
 	project.next_action_url = reverse('dge', kwargs={'project_pk':project.pk})
 	project.has_downloads = True
         project.save()
-        finish(project)
+        tasks.finish_alignment_work.delay(project.pk)
