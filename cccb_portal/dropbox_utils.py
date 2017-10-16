@@ -190,7 +190,6 @@ def do_transfer(file_source, dropbox_destination_folderpath, transfer_idx, maste
 	buffer = 5
 	config_params = {}
 	config_params['google_project'] = settings.GOOGLE_PROJECT
-	config_params['image_name'] = settings.DROPBOX_TRANSFER_IMAGE
 	config_params['transfer_idx'] = transfer_idx
 	config_params['disk_size_in_gb'] = min_size if (size_in_gb + buffer) <= min_size else int(buffer + size_in_gb)
 	config_params['default_zone'] = settings.GOOGLE_DEFAULT_ZONE
@@ -214,7 +213,7 @@ def launch_custom_instance(compute, config_params):
     now = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
     instance_name = 'dropbox-transfer-%s-%s' % (now, config_params['transfer_idx'])
 
-    source_disk_image = 'projects/%s/global/images/%s' % (config_params['google_project'], config_params['image_name'])
+    source_disk_image = settings.DROPBOX_TRANSFER_IMAGE
     disk_size_in_gb = config_params['disk_size_in_gb']
     machine_type = "zones/%s/machineTypes/%s" % (config_params['default_zone'], config_params['machine_type'])
     startup_script_url = config_params['gs_prefix'] + os.path.join(config_params['startup_bucket'], config_params['startup_script']) 
