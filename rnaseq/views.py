@@ -117,7 +117,7 @@ def perform_dge(request, project_pk):
 		bucket = storage_client.get_bucket(bucket_name)
 		local_dir = os.path.join(settings.TEMP_DIR, '%s-%s' % (bucket.name, datetime.datetime.now().strftime('%H%M%S')) )
 		try:
-			os.mkdir(local_dir)
+			os.makedirs(local_dir)
 		except OSError as ex:
 			if ex.errno == 17:
 				pass
