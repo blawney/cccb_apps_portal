@@ -338,10 +338,10 @@ def make_qc_report(logfile_objs, local_dir, config_params):
     # plot the read composition (uniquely, multi-mapped, etc)
     targets =[ 'Uniquely mapped reads %', '% of reads mapped to multiple loci', '% of reads mapped to too many loci', '% of reads unmapped: too many mismatches', '% of reads unmapped: too short', '% of reads unmapped: other']
     mapping_composition_colors = ['#504244', '#84C85C', '#A663B7', '#C2504C', '#95B8B8', '#B59547']
-    plot_methods.plot_read_composition(log_data, targets, os.path.join(local_dir, config_params['mapping_composition_plot']), mapping_composition_colors)
+    plot_read_composition(log_data, targets, os.path.join(local_dir, config_params['mapping_composition_plot']), mapping_composition_colors)
 
     # plot the total number of reads:
-    plot_methods.plot_total_read_count(log_data, os.path.join(local_dir, config_params['total_reads_plot']))
+    plot_total_read_count(log_data, os.path.join(local_dir, config_params['total_reads_plot']))
 
     # copy the teX and other files over to the local folder:
     this_dir = os.path.dirname(os.path.realpath(__file__))
