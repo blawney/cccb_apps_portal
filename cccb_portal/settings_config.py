@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'variant_calling_from_fastq',
     'variant_calling_from_bam',
     'google_drive',
+    'pooled_crispr',
 ]
 
 MIDDLEWARE = [

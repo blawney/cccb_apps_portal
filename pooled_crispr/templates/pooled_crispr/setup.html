@@ -1,0 +1,47 @@
+{% extends "analysis_portal/base.html" %}
+{% load static %}
+{% block content %}
+<div id="main-container" class="container">
+	<div class="row">
+		<div class="col-md-6">
+			<span id="project-title" class="project-title">{{project_name}}</span>
+			<input id="pk-field" type="hidden" value="{{project_pk}}">
+		</div>
+	</div>
+	<div class="row">
+		<div id="go-back" class="col-md-6">
+			<span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+			<a href="/analysis/home/">Back</a>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-7">
+			<div id="add-sample-panel" class="panel panel-default">     
+				<div class="panel-heading">
+					<h4>A title</h4>
+				</div>
+				<div id="panel-inner" class="panel-wrapper-div">
+					You have chosen project {{project_id}}
+				</div>
+			</div>
+                </div>
+		<div class="col-md-5">
+                        <div class="row">
+                                <div class="col-md-12">
+                                        <div id="instructions-panel" class="panel panel-default">
+                                                <div class="panel-heading">
+                                                        <h4>Instructions</h4>
+                                                </div>
+                                                <div class="panel-wrapper-div">
+							<p>Instructions here.</p>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+	</div>
+</div>
+{% endblock %}
+
+{% block page_specific_script %}
+{% endblock %}
