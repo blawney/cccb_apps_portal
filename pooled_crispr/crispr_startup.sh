@@ -6,7 +6,7 @@ BOWTIE2=biocontainers/bowtie2
 PYTHON=continuumio/anaconda
 
 docker pull $SAMTOOLS \
-  && docker pull $BOWTIE2
+  && docker pull $BOWTIE2 \
   && docker pull $PYTHON
 
 # a directory for scripts:
@@ -31,22 +31,25 @@ LIBRARY_FILE_GS=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetad
 
 # a space-delimited string containing the locations of fastq files to process:
 ALL_FASTQ_FILES_STR=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/attributes/fastq-files)
+echo "Fastq files: "$ALL_FASTQ_FILES_STR
 ALL_FASTQ_FILES_GS=( $ALL_FASTQ_FILES_STR ) # make into array
 
-
-gsutil cp $LIBRARY_FILE_GS
+gsutil cp $LIBRARY_FILE_GS .
+LIBRARY_FILE_LOCAL=$(basename $LIBRARY_FILE_GS)
 
 FQ_FILES=""
-for f in "${ALL_FASTQ_FILES_GS[@]}" do;
-	gsutil cp $f
-	FQ_FILES+=" "$(basename $i)
+for f in "${ALL_FASTQ_FILES_GS[@]}"; do
+	echo "Copy "$f
+	gsutil cp $f .
+	FQ_FILES+=" "$(basename $f)
 done;
 
 # cast into array for use later:
 FQ_FILES=( $FQ_FILES )
 
 LIBRARY_FASTA=library.fa
-docker run -v $WD:/workspace -v $SCRIPTS_DIR:/scripts $PYTHON python /scripts/process_library.py /workspace/$LIBRARY_FILE_GS /workspace/$LIBRARY_FASTA
+echo "docker run -v $WD:/workspace -v $SCRIPTS_DIR:/scripts $PYTHON python /scripts/process_library.py /workspace/$LIBRARY_FILE_LOCAL /workspace/$LIBRARY_FASTA"
+docker run -v $WD:/workspace -v $SCRIPTS_DIR:/scripts $PYTHON python /scripts/process_library.py /workspace/$LIBRARY_FILE_LOCAL /workspace/$LIBRARY_FASTA
 
 IDX_DIR=bowtie_idx
 mkdir $WD/$IDX_DIR
@@ -60,13 +63,13 @@ COUNT_SUFFIX=".counts"
 SORT_BAM_SUFFIX="sorted.bam"
 for FQ in "${FQ_FILES[@]}"; do
 
-	SAMPLE=$(basename FQ .fastq.gz)
+	SAMPLE=$(basename $FQ .fastq.gz)
 	SORTED_BAM=$SAMPLE"."$SORT_BAM_SUFFIX
 
 	# do the alignments, change to BAM, sort BAM:
 	docker run -v $WD:/workspace $BOWTIE2 bowtie2 \
-		--trim3 5 -D 20 -R 3 -N 1 -L 20 -i S,1,0.50 
-		-x /workspace/$IDX_DIR/$LIBRARY_IDX 
+		--trim3 5 -D 20 -R 3 -N 1 -L 20 -i S,1,0.50 \
+		-x /workspace/$IDX_DIR/$LIBRARY_IDX \
 		-U /workspace/$FQ | \
 	docker run -i -v $WD:/workspace $SAMTOOLS samtools view -bS - | \
 	docker run -i -v $WD:/workspace $SAMTOOLS samtools sort -o /workspace/$SORTED_BAM -O BAM -
@@ -79,10 +82,10 @@ done
 
 # merge the count files:
 OUTFILE=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/attributes/merged-counts-file)
-docker run -v $WD:/workspace -v $SCRIPTS_DIR:/scripts $PYTHON python /scripts/merge_counts.py /workspace $COUNT_SUFFIX /workspace/$OUTFILE
+docker run -v $WD:/workspace -v $SCRIPTS_DIR:/scripts $PYTHON python /scripts/merge_counts.py /workspace $COUNT_SUFFIX $OUTFILE
 
 # Copy everything back to the cloud storage:
 RESULT_BUCKET=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/attributes/result-bucket)
-gsutil cp $OUTFILE $RESULT_BUCKET
-gsutil cp *$SORT_BAM_SUFFIX $RESULT_BUCKET
-gsutil cp $LIBRARY_FASTA $RESULT_BUCKET
+gsutil cp $OUTFILE $RESULT_BUCKET/$OUTFILE
+gsutil cp *$SORT_BAM_SUFFIX $RESULT_BUCKET/
+gsutil cp $LIBRARY_FASTA $RESULT_BUCKET/
