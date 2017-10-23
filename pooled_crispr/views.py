@@ -4,6 +4,10 @@ from __future__ import unicode_literals
 from django.shortcuts import render
 from django.conf import settings
 
-def pooled_crispr_setup_view(request, project_pk):
-	context = {'project_id': project_pk, 'project_name':'Dummy project'}
-	return render(request, 'pooled_crispr/setup.html', context)
+def pooled_crispr_upload_view(request, project_pk):
+	context = {}
+	return render(request, 'pooled_crispr/upload.html', context)
+
+def pooled_crispr_summary_view(request, project_pk):
+	context = {}
+	return render(request, 'pooled_crispr/summary.html', context)
