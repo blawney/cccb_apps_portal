@@ -67,7 +67,7 @@ class Project(models.Model):
 	# Note that next_action_url is subtly different than the URLs given by the workflow associated with a Service
 	# Those tell us the workflow order.  This url provides a way to navigate from the 'project home' page
 	next_action_url = models.CharField(max_length = 255, default='')
-	step_number = models.PositiveSmallIntegerField() # for tracking which step of the workflow we are on
+	step_number = models.PositiveSmallIntegerField(null=True) # for tracking which step of the workflow we are on
 	has_downloads = models.BooleanField(default=False)
 	max_sample_number = models.IntegerField(default=50)
 	creation_date = models.DateTimeField(blank=True, null=True)

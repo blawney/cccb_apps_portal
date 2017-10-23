@@ -58,6 +58,7 @@ def set_genome(request, project_pk):
 	Called (by ajax) when setting the selecting/setting the reference genome
 	"""
 	project = helpers.check_ownership(project_pk, request.user)
+	print 'back in set_genome, project=%s' % project
 	if project is not None:
 		selected_genome = request.POST.get('selected_genome')
 		org = Organism.objects.get(reference_genome = selected_genome)

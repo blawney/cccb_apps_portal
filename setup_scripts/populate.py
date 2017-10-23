@@ -6,8 +6,11 @@ steps, which are defined by which Service the project corresponds to.
 
 Thus, when we startup, we want to easily specify that a RNA-seq service has 5 steps, and define their order
 """
-
+import sys
 import os
+
+app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(app_root)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'cccb_portal.settings')
 
 import django
@@ -33,28 +36,28 @@ svc.upload_instructions = """<p>Manage your files here. Upload or remove your co
 svc.save()
 
 # add the applicable organisms/genome builds:
-org = Organism.objects.get_or_create(reference_genome='hg19', service=svc)
+org = Organism.objects.get_or_create(reference_genome='hg19', service=svc)[0]
 org.description = 'Human (hg19) for exome variant calling'
 org.save()
 
-workflow_step = Workflow.objects.get_or_create(step_order=0, service=svc)
-workflow_step.step_url = '/analysis/home'
+workflow_step = Workflow.objects.get_or_create(step_order=0, service=svc)[0]
+workflow_step.step_url = 'analysis_home_view'
 workflow_step.save()
 
-workflow_step = Workflow.objects.get_or_create(step_order=1, service=svc)
-workflow_step.step_url = '/analysis/genome-choice'
+workflow_step = Workflow.objects.get_or_create(step_order=1, service=svc)[0]
+workflow_step.step_url = 'choose_genome'
 workflow_step.save()
 
-workflow_step = Workflow.objects.get_or_create(step_order=2, service=svc)
-workflow_step.step_url = '/analysis/upload'
+workflow_step = Workflow.objects.get_or_create(step_order=2, service=svc)[0]
+workflow_step.step_url = 'generic_upload'
 workflow_step.save()
 
-workflow_step = Workflow.objects.get_or_create(step_order=3, service=svc)
-workflow_step.step_url = '/analysis/annotate-files'
+workflow_step = Workflow.objects.get_or_create(step_order=3, service=svc)[0]
+workflow_step.step_url = 'file_annotation'
 workflow_step.save()
 
-workflow_step = Workflow.objects.get_or_create(step_order=4, service=svc)
-workflow_step.step_url = '/analysis/summary'
+workflow_step = Workflow.objects.get_or_create(step_order=4, service=svc)[0]
+workflow_step.step_url = 'pre_analysis_summary'
 workflow_step.save()
 
 ###################################### End variant calling from fastq ##############################################################
@@ -76,28 +79,28 @@ svc.upload_instructions = """<p>Manage your files here. Upload or remove your co
 svc.save()
 
 # add the applicable organisms/genome builds:
-org = Organism.objects.get_or_create(reference_genome='hg19', service=svc)
+org = Organism.objects.get_or_create(reference_genome='hg19', service=svc)[0]
 org.description = 'Human (hg19) for exome variant calling'
 org.save()
 
-workflow_step = Workflow.objects.get_or_create(step_order=0, service=svc)
-workflow_step.step_url = '/analysis/home'
+workflow_step = Workflow.objects.get_or_create(step_order=0, service=svc)[0]
+workflow_step.step_url = 'analysis_home_view'
 workflow_step.save()
 
-workflow_step = Workflow.objects.get_or_create(step_order=1, service=svc)
-workflow_step.step_url = '/analysis/genome-choice'
+workflow_step = Workflow.objects.get_or_create(step_order=1, service=svc)[0]
+workflow_step.step_url = 'choose_genome'
 workflow_step.save()
 
-workflow_step = Workflow.objects.get_or_create(step_order=2, service=svc)
-workflow_step.step_url = '/analysis/upload'
+workflow_step = Workflow.objects.get_or_create(step_order=2, service=svc)[0]
+workflow_step.step_url = 'generic_upload'
 workflow_step.save()
 
-workflow_step = Workflow.objects.get_or_create(step_order=3, service=svc)
-workflow_step.step_url = '/analysis/annotate-files'
+workflow_step = Workflow.objects.get_or_create(step_order=3, service=svc)[0]
+workflow_step.step_url = 'file_annotation'
 workflow_step.save()
 
-workflow_step = Workflow.objects.get_or_create(step_order=4, service=svc)
-workflow_step.step_url = '/analysis/summary'
+workflow_step = Workflow.objects.get_or_create(step_order=4, service=svc)[0]
+workflow_step.step_url = 'pre_analysis_summary'
 workflow_step.save()
 
 ###################################### End variant calling from BAM ##############################################################
@@ -120,32 +123,32 @@ svc.upload_instructions = """<p>Manage your files here. Upload or remove your co
 svc.save()
 
 # add the applicable organisms/genome builds:
-org = Organism.objects.get_or_create(reference_genome='grch38', service=svc)
+org = Organism.objects.get_or_create(reference_genome='grch38', service=svc)[0]
 org.description = 'Human (Homo Sapiens Ensembl GRCh38)'
 org.save()
 
-org = Organism.objects.get_or_create(reference_genome='grcm38', service=svc)
+org = Organism.objects.get_or_create(reference_genome='grcm38', service=svc)[0]
 org.description = 'Mouse (Mus Musculus Ensembl GRCm38)'
 org.save()
 
-workflow_step = Workflow.objects.get_or_create(step_order=0, service=svc)
-workflow_step.step_url = '/analysis/home'
+workflow_step = Workflow.objects.get_or_create(step_order=0, service=svc)[0]
+workflow_step.step_url = 'analysis_home_view'
 workflow_step.save()
 
-workflow_step = Workflow.objects.get_or_create(step_order=1, service=svc)
-workflow_step.step_url = '/analysis/genome-choice'
+workflow_step = Workflow.objects.get_or_create(step_order=1, service=svc)[0]
+workflow_step.step_url = 'choose_genome'
 workflow_step.save()
 
-workflow_step = Workflow.objects.get_or_create(step_order=2, service=svc)
-workflow_step.step_url = '/analysis/upload'
+workflow_step = Workflow.objects.get_or_create(step_order=2, service=svc)[0]
+workflow_step.step_url = 'generic_upload'
 workflow_step.save()
 
-workflow_step = Workflow.objects.get_or_create(step_order=3, service=svc)
-workflow_step.step_url = '/analysis/annotate-files'
+workflow_step = Workflow.objects.get_or_create(step_order=3, service=svc)[0]
+workflow_step.step_url = 'file_annotation'
 workflow_step.save()
 
-workflow_step = Workflow.objects.get_or_create(step_order=4, service=svc)
-workflow_step.step_url = '/analysis/summary'
+workflow_step = Workflow.objects.get_or_create(step_order=4, service=svc)[0]
+workflow_step.step_url = 'pre_analysis_summary'
 workflow_step.save()
 
 ###################################### End RNA-seq ##############################################################
