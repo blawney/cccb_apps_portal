@@ -5,12 +5,6 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
-class Organism(models.Model):
-	reference_genome = models.CharField(max_length=50) # a brief name
-	description = models.CharField(max_length=500) # a longer description
-	def __str__(self):
-		return self.reference_genome
-
 
 class Service(models.Model):
 	"""
@@ -23,6 +17,28 @@ class Service(models.Model):
 
 	def __str__(self):
 		return '%s (%s)' % (self.name, self.application_url)
+
+
+class Organism(models.Model):
+	reference_genome = models.CharField(max_length=50) # a brief name
+	description = models.CharField(max_length=500) # a longer description
+	service = models.ForeignKey(Service)
+	def __str__(self):
+		return self.reference_genome
+
+
+class Workflow(models.Model):
+	"""
+	Defines the URLs and the ordering that one can visit for a service
+	"""
+	# note that this is NOT an actual URL.  Rather, it's a string that can be used via django's 'reverse' method to 
+	# find the proper URL.  Thus, in the urls.py files, need to define view names, since they are referenced here
+	step_url =  models.CharField(max_length = 255, default='')
+	step_order = models.PositiveSmallIntegerField()
+	service = models.ForeignKey(Service)
+
+	def __str__(self):
+		return 'URL: %s (step number %s)' % (self.step_url, self.step_order)
 
 
 class ProjectManager(models.Manager):
@@ -48,7 +64,10 @@ class Project(models.Model):
 	finish_time = models.DateTimeField(blank=True, null=True)
 	bucket = models.CharField(max_length=63) # default max length for a bucket is 63
 	next_action_text = models.CharField(max_length = 100, default='')
+	# Note that next_action_url is subtly different than the URLs given by the workflow associated with a Service
+	# Those tell us the workflow order.  This url provides a way to navigate from the 'project home' page
 	next_action_url = models.CharField(max_length = 255, default='')
+	step_number = models.PositiveSmallIntegerField() # for tracking which step of the workflow we are on
 	has_downloads = models.BooleanField(default=False)
 	max_sample_number = models.IntegerField(default=50)
 	creation_date = models.DateTimeField(blank=True, null=True)

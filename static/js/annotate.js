@@ -235,7 +235,8 @@ createMappings = function(jsonStr){
 	xhr.onreadystatechange = function(){
 		if(xhr.readyState === 4){
 			if(xhr.status === 200){
-				window.location.assign("/analysis/summary/" + pk + "/");
+				var next_url = document.getElementById("next-page").value;
+				window.location.assign(next_url + "/" + pk + "/");
 			}
 		}
 	}

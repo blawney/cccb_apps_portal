@@ -35,6 +35,11 @@ class ProjecStatusMiddleWare(object):
 						return redirect('in_progress_view', project_pk = project_pk)
 					elif project.completed and is_setup_view:
 						return redirect('download_view', project_pk = project_pk)
+					# to track the current step and maintain a single place to track the most recent page:
+					service = project.service
+					current_workflow_step = service.workflow_set.filter(step_url=url)
+					project.step_number = current_workflow_step.step_order
+					project.save()
 				else:
 					print 'was not owner'
 					raise Exception('Was not project owner')

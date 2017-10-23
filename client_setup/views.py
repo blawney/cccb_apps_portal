@@ -90,7 +90,9 @@ def setup_client(request):
 				project.creation_date = datetime.datetime.now()
 				project.save()
 
-				project.next_action_url = reverse('choose_genome', kwargs={'project_pk':project.pk})
+				workflow = svc.workflow_set.filter(step_order=1)
+				project.step_number = 0
+				project.next_action_url = workflow.step_url + '/' + project.pk})
 				project.save()
 
 				now = project.creation_date

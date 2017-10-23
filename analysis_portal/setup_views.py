@@ -75,11 +75,20 @@ def genome_selection_page(request, project_pk):
 	"""
 	project = helpers.check_ownership(project_pk, request.user)
 	if project is not None:
+		# get the service type which informs which genomes to present
+		service = project.service
 		d = {}
-		orgs = Organism.objects.all()
+		orgs = service.organism_set.all() # the references associated with the service
 		for org in orgs:
 			d[org.reference_genome] = org.description
-		return render(request, 'analysis_portal/choose_genome.html', {'project_pk': project.pk, 'references':d, 'project_name':project.name})
+
+		previous_url, next_url = helpers.get_bearings(project)
+		context = {'project_pk': project.pk, \
+				'references':d, \
+				'project_name':project.name, \
+				'previous_page_url':previous_url, \
+				'next_page_url':next_url}
+		return render(request, 'analysis_portal/choose_genome.html', context)
 	else:
 		return HttpResponseBadRequest('')
 
@@ -98,7 +107,7 @@ def home_view(request):
 	projects = []
 	for p in users_projects:
 		download_url = reverse('download_view', kwargs={'project_pk':p.pk})
-		next_action_url = p.next_action_url
+		next_action_url = p.next_action_url # note that the next_action_url is different than the workflow step-based URLs
 		projects.append(ProjectDisplay(p.pk, p.name, p.service.description, p.completed, p.in_progress, p.paused_for_user_input, p.finish_time, p.status_message, p.next_action_text, next_action_url, p.has_downloads, download_url))
 
 	context['projects'] = projects
@@ -121,7 +130,14 @@ def upload_page(request, project_pk):
 				samplename = None	
 			existing_files.append(FileDisplay(samplename, f.pk, f.filepath))
 		instructions = project.service.upload_instructions
-		return render(request, 'analysis_portal/upload_page.html', {'project_name': project.name, 'existing_files':existing_files, 'project_pk': project_pk, 'instructions':instructions})
+		previous_url, next_url = helpers.get_bearings(project)		
+		context = {'project_name': project.name, \
+				'existing_files':existing_files, \
+				'project_pk': project_pk, \
+				'instructions':instructions, \
+				'previous_page_url':previous_url, \
+                                'next_page_url':next_url}
+		return render(request, 'analysis_portal/upload_page.html', context)
 	else:        
 		return HttpResponseBadRequest('')
 	
@@ -194,7 +210,15 @@ def annotate_files_and_samples(request, project_pk):
 				assigned_files[f.sample.name].append(fdisplay)
 			else:
 				unassigned_files.append(fdisplay)
-		return render(request, 'analysis_portal/annotate.html', {'project_name': project.name, 'unassigned_files':unassigned_files, 'assigned_files': assigned_files, 'project_pk': project_pk, 'no_uploaded_files':zero_uploaded_files})
+		previous_url, next_url = helpers.get_bearings(project)
+		context = {'project_name': project.name, \
+				'unassigned_files':unassigned_files, \
+				'assigned_files': assigned_files, \
+				'project_pk': project_pk, \
+				'no_uploaded_files':zero_uploaded_files,
+                                'previous_page_url':previous_url, \
+                                'next_page_url':next_url}
+		return render(request, 'analysis_portal/annotate.html', context)
 	else:
 		return HttpResponseBadRequest('')
 				
@@ -276,7 +300,13 @@ def summary(request, project_pk):
 		for s in all_samples:
 			data_sources = s.datasource_set.all()	
 			full_mapping[s] = ', '.join([os.path.basename(x.filepath) for x in data_sources])
-		return render(request, 'analysis_portal/summary.html', {'mapping':full_mapping, 'project_pk':project.pk, 'project_name':project.name})
+		previous_url, next_url = helpers.get_bearings(project)
+		context = {'mapping':full_mapping, \
+				'project_pk':project.pk, \
+				'project_name':project.name,\
+                                'previous_page_url':previous_url, \
+                                'next_page_url':next_url}
+		return render(request, 'analysis_portal/summary.html', context)
 	else:
 		return HttpResponseBadRequest('')
 
