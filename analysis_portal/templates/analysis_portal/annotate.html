@@ -6,13 +6,14 @@
 		<div class="col-md-6">
 			<span id="project-title" class="project-title">{{project_name}}</span>
 			<input id="project-title-input">
+			<input id="next-page" type="hidden" value="{{next_page_url}}">
 			<input id="pk-field" type="hidden" value="{{project_pk}}">
 		</div>
 	</div>
 	<div class="row">
 		<div id="go-back" class="col-md-6">
 			<span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
-			<a href="/analysis/upload/{{project_pk}}">Back</a>
+			<a href="{{previous_page_url}}">Back</a>
 		</div>
 	</div>
 	{% if no_uploaded_files %}

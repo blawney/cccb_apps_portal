@@ -20,7 +20,8 @@ nextButton.addEventListener("click", function(e){
 	xhr.onreadystatechange = function() {
 		if (xhr.readyState === 4) {
 			if (xhr.status === 200) {
-				window.location.assign("/analysis/upload/" + pk + "/");
+				var next_url = document.getElementById("next-page").value;
+				window.location.assign(next_url + pk + "/");
 			}
 		}
 	}

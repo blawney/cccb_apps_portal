@@ -27,7 +27,8 @@ window.addEventListener("drop", function(e){
 
 annotateSampleBtn.addEventListener("click", function(e){
 	var pk = document.getElementById("pk-field").value;
-	window.location.assign("/analysis/annotate-files/" + pk + "/")
+	var next_url = document.getElementById("next-page").value;
+	window.location.assign(next_url + "/" + pk + "/")
 });
 
 function rm_upload(e){

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.contrib import admin
 
-from models import Service,Project,Sample,DataSource, Organism
+from models import Service,Project,Sample,DataSource, Organism, Workflow
 
 class ServiceAdmin(admin.ModelAdmin):
 	list_display = ('name', 'description', 'application_url', 'upload_instructions')
@@ -22,11 +22,16 @@ class DataSourceAdmin(admin.ModelAdmin):
 	list_editable = ('source_type', 'filepath', 'project')
 
 class OrganismAdmin(admin.ModelAdmin):
-	list_display = ('reference_genome', 'description')
-	list_editable = ('description',)
+	list_display = ('reference_genome', 'description', 'service')
+	list_editable = ('description', 'service')
+
+class WorkflowAdmin(admin.ModelAdmin):
+	list_display = ('step_order','step_url', 'service')
+	list_editable = ('step_url',)
 
 admin.site.register(Service, ServiceAdmin)
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(Sample, SampleAdmin)
 admin.site.register(DataSource, DataSourceAdmin)
 admin.site.register(Organism, OrganismAdmin)
+admin.site.register(Workflow, WorkflowAdmin)

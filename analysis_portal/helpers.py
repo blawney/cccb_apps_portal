@@ -2,7 +2,7 @@ from client_setup.models import Project, Sample, DataSource
 from django.core.exceptions import ObjectDoesNotExist, SuspiciousOperation
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.conf import settings
-
+from django.urls import reverse
 import os
 import re
 
@@ -17,7 +17,6 @@ def check_ownership(project_pk, user):
 	"""
 	try:
 		project_pk = int(project_pk)
-		print 'about to query project'
 		project = Project.objects.get(pk=project_pk)
 		if project.owner == user:
 			return project
@@ -67,3 +66,34 @@ def add_datasource_to_database(project, newfile):
         new_ds.sample = s
         new_ds.save()
         return HttpResponse('')
+
+
+def get_bearings(project):
+	"""
+	Uses the current URL to determine which step in the workflow we are at.
+	Determines the URLs to the previous and next steps in the workflow
+	returns a tuple of previous url and next url 
+	"""
+	# Note that there is middleware looking at the request and determining the current
+	# workflow step based on the requested url.  The Project object has its step_number
+	# attribute set accordingly.
+	service = project.service
+	current_step = project.step_number
+	next_step_number = current_step + 1
+	previous_step_number = current_step -1 if current_step >=1 else 0
+
+	# if previous page was the home/dashboard, just use a reverse url resolver without a primary key for the project
+	previous_workflow_step = service.workflow_set.get(step_order=previous_step_number)
+	previous_url_name = previous_workflow_step.step_url
+	if previous_step_number == 0:
+		previous_url = reverse(previous_url_name)
+	else:
+		previous_url = reverse(previous_url_name, args=(project.pk,))
+
+	try:
+		next_workflow_step = service.workflow_set.get(step_order=next_step_number)
+		next_url_name = next_workflow_step.step_url
+		next_url = reverse(next_url_name, args=(project.pk,))
+	except ObjectDoesNotExist as ex:
+		next_url = ''
+	return (previous_url, next_url)
