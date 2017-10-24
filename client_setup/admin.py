@@ -6,8 +6,8 @@ from django.contrib import admin
 from models import Service,Project,Sample,DataSource, Organism, Workflow
 
 class ServiceAdmin(admin.ModelAdmin):
-	list_display = ('name', 'description', 'application_url', 'upload_instructions')
-	list_editable = ('description', 'application_url', 'upload_instructions')
+	list_display = ('name', 'description', 'application_url')
+	list_editable = ('description', 'application_url',)
 
 class ProjectAdmin(admin.ModelAdmin):
 	list_display = ('name', 'owner','service', 'bucket', 'completed','in_progress', 'paused_for_user_input', 'start_time', 'finish_time', 'reference_organism', 'ilab_id', 'next_action_text', 'next_action_url', 'status_message', 'max_sample_number', 'creation_date')
@@ -26,7 +26,7 @@ class OrganismAdmin(admin.ModelAdmin):
 	list_editable = ('description', 'service')
 
 class WorkflowAdmin(admin.ModelAdmin):
-	list_display = ('step_order','step_url', 'service')
+	list_display = ('step_order','step_url', 'service', 'instructions')
 	list_editable = ('step_url',)
 
 admin.site.register(Service, ServiceAdmin)
