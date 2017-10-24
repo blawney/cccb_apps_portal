@@ -37,6 +37,10 @@ class Workflow(models.Model):
 	step_order = models.PositiveSmallIntegerField()
 	service = models.ForeignKey(Service)
 
+	class Meta:
+		unique_together = (('service','step_order'),)
+
+
 	def __str__(self):
 		return 'URL: %s (step number %s)' % (self.step_url, self.step_order)
 
