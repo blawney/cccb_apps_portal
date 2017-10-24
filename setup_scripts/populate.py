@@ -158,25 +158,18 @@ workflow_step.save()
 svc = Service.objects.get_or_create(name='pooled_crispr')[0]
 svc.description = 'Pooled CRISPR screen quantification'
 svc.application_url = 'https://cccb-analysis.tm4.org'
-svc.upload_instructions = """<p>Manage your files here.  For CRISPR screens there are two types of files to upload:</p>
-	<p><strong>1. A library file:</strong> This file defines the CRISPR targets to which we will align the sequences.  We accept Excel (xls, xlsx), tab-delimited (tsv), or
-	comma-separated (csv) formats.  Regardless of the file format, two columns are required (in the following order):
-	<ul>
-		<li>Target ID:  This identifies the target, often a gene name.  If the entries in this column are not unique, we will automatically create unique names for each target.</li>
-		<li>sgRNA sequence:  This is the 20bp guide RNA sequence, <i>without</i> the PAM or flanking context.  Non-unique sequences (e.g. the same sequence in different genes) will be collapsed and 
-		    given an alternate name to reflect the merge.
-		</li>
-	</ul>
-	The columns should be named although we do not use the name.  If they are not, the first line will be ignored.
-	 </p>
-	<p> <strong>2. FastQ-format file(s):</strong>.  One or more fastQ-format sequence files, one per sample.  
-	We require files to be Gzip-compressed to save disk space; files will typically end with "gz" if that is the case.  
-	Most sequencing providers will send sequence data in this format.
-	
-	Sample names will be inferred from the names of the files by removing the "fastq.gz" ending.  For example, a file
-	with name "sample_A.fastq.gz" will be assigned to a sample with name "sample_A"
 
-	</p>"""
+svc.upload_instructions = """<p>Manage your files here. Upload or remove your compressed, 
+	FASTQ-format files as necessary.
+
+	<p class="bolded">FastQ file upload:</p>  
+	<p>We require fastq files to be Gzip-compressed to save disk space; 
+	files will typically end with "gz" if that is the case.  We will infer the sample name from the file by removing
+	the "fastq.gz" suffix.  For example, if the file is named "sample_A.fastq.gz", then we will create a sample
+	named "sample_A".
+	</p>
+	"""
+
 svc.save()
 
 workflow_step = Workflow.objects.get_or_create(step_order=0, service=svc)[0]
@@ -184,10 +177,14 @@ workflow_step.step_url = 'analysis_home_view'
 workflow_step.save()
 
 workflow_step = Workflow.objects.get_or_create(step_order=1, service=svc)[0]
-workflow_step.step_url = 'pooled_crispr_upload'
+workflow_step.step_url = 'pooled_crispr_fastq_upload'
 workflow_step.save()
 
 workflow_step = Workflow.objects.get_or_create(step_order=2, service=svc)[0]
+workflow_step.step_url = 'pooled_crispr_library_upload'
+workflow_step.save()
+
+workflow_step = Workflow.objects.get_or_create(step_order=3, service=svc)[0]
 workflow_step.step_url = 'pooled_crispr_summary'
 workflow_step.save()
 
