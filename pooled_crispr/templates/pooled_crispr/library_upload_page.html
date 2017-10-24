@@ -1,0 +1,103 @@
+{% extends "analysis_portal/base.html" %}
+{% load static %}
+{% block content %}
+<div id="main-container" class="container">
+	<div class="row">
+		<div class="col-md-6">
+			<span id="project-title" class="project-title">{{project_name}}</span>
+			<input id="project-title-input">
+			<input id="pk-field" type="hidden" value="{{project_pk}}">
+			<input id="next-page" type="hidden" value="{{next_page_url}}">
+			<span id="edit-project-title" class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
+		</div>
+	</div>
+        <div class="row">
+                <div id="go-back" class="col-md-6">
+                        <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+                        <a href="{{previous_page_url}}">Back</a>
+                </div>
+        </div>
+	<div class="row">
+		<div class="col-md-7">
+			<div id="add-sample-panel" class="panel panel-default">     
+				<div class="panel-heading">
+					<h4>Add new files</h4>
+				</div>
+				<div class="panel-wrapper-div">
+					<!--<p class="interjection">Or</pp>
+					<p><input type="button" value="Transfer from Google Drive" id="drive-transfer" class="btn btn-default"/></p>
+					-->
+					<p class="interjection">Or</pp>
+					<input id="files-upload" type="file" multiple/>
+					<p class="interjection">Or</pp>
+					<p id="drop-area">
+						<span class="drop-instructions">Drag and drop files here</span>
+						<span class="drop-over">Drop!</span>
+					</p>
+					<div id="files-to-upload-display">
+					</div>
+					<button id="upload-button" class="btn btn-primary">Begin upload</button>
+					<div id="upload-progress-section"></div>
+				</div>
+			</div>
+                </div>
+		<div class="col-md-5">
+			<div class="row">
+				<div class="col-md-12">
+					<div id="existing-files-panel" class="panel panel-default">     
+						<div class="panel-heading">
+							<h4>Uploaded files</h4>
+						</div>
+						<div class="panel-wrapper-div">
+							<div id="existing-files-wrapper">
+								{% for existing_file in existing_files %}
+								<p class="sample-display">
+									<span class="lhs">{{existing_file.file_string}}
+									{% if existing_file.samplename is not none %}
+									 ({{existing_file.samplename}})
+									{% endif %}
+									</span>
+									<span class="rhs" filename="{{existing_file.file_string}}">x</span>
+								</p>
+								{% endfor %}
+							</div>
+							{% if existing_files|length > 0 %}
+								<button id="annotate-sample-button" class="btn btn-primary">Next <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></button>
+							{% else %}
+								<button id="annotate-sample-button" class="btn btn-primary" disabled="true">Next <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></button>
+							{% endif %}
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-12">
+					<div id="instructions-panel" class="panel panel-default">
+						<div class="panel-heading">
+							<h4>Instructions</h4>
+						</div>
+						<div class="panel-wrapper-div">
+							{{instructions|safe}}
+						</div>
+					</div>
+				</div>				
+			</div>
+                </div>
+	</div>
+</div>
+		<div id="confirm-delete-box">
+			<p>Are you sure?  The uploaded file will be deleted permanently.</p>
+			<button id="yes-delete" class="btn btn-warning pull-left">Yes, delete</button>
+			<button id="no-cancel" class="btn btn-primary pull-right">No, cancel</button>
+		</div>
+<div id="drive-chooser">
+	<p>Files would be here</p>
+	<button id="go-transfer-files" class="btn btn-primary pull-right">Transfer</button>
+	
+</div>
+{% endblock %}
+
+{% block page_specific_script %}
+	<script type="text/javascript" src="https://www.dropbox.com/static/api/2/dropins.js" id="dropboxjs" data-app-key="yabmx86vuw42h3q"></script>
+	<script src="{% static "js/upload_page.js" %}"></script>
+{% endblock %}
