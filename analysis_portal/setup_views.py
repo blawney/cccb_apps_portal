@@ -130,7 +130,10 @@ def upload_page(request, project_pk):
 			else:
 				samplename = None	
 			existing_files.append(FileDisplay(samplename, f.pk, f.filepath))
-		instructions = project.service.upload_instructions
+		service = project.service
+		view_name = request.resolver_match.url_name
+		current_workflow_step = service.workflow_set.get(step_url=view_name)
+		instructions = current_workflow_step.instructions
 		previous_url, next_url = helpers.get_bearings(project)		
 		context = {'project_name': project.name, \
 				'existing_files':existing_files, \

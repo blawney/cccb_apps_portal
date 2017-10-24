@@ -13,7 +13,6 @@ class Service(models.Model):
 	name = models.CharField(max_length=50) # a brief name
 	description = models.CharField(max_length=500) # a longer description
 	application_url = models.URLField()
-	upload_instructions = models.CharField(max_length=5000, default='', blank=True, null=True)
 
 	def __str__(self):
 		return '%s (%s)' % (self.name, self.application_url)
@@ -36,6 +35,10 @@ class Workflow(models.Model):
 	step_url =  models.CharField(max_length = 255, default='')
 	step_order = models.PositiveSmallIntegerField()
 	service = models.ForeignKey(Service)
+	instructions = models.CharField(max_length=5000, default='', blank=True, null=True)
+
+	class Meta:
+		unique_together = (('service','step_order'),)
 
 	def __str__(self):
 		return 'URL: %s (step number %s)' % (self.step_url, self.step_order)
