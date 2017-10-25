@@ -94,6 +94,8 @@ def dropbox_transfer(request, project_pk):
 		project = Project.objects.get(pk=project_pk)
 		if project.owner == request.user:
 			print request.POST
+			is_sample_datasource_upload = request.POST.get('sample_source_upload')
+			print is_sample_datasource_upload			
 			file_links = request.POST.get('transfer_files')
 			file_links = [x.strip() for x in file_links.split(',')]
 			print file_links

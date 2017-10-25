@@ -133,14 +133,25 @@ def upload_page(request, project_pk):
 		service = project.service
 		view_name = request.resolver_match.url_name
 		current_workflow_step = service.workflow_set.get(step_url=view_name)
+		try:
+			extra = json.loads(current_workflow_step.extra)
+		except ValueError as ex:
+			# if no extra information was specified for this step, catch this exception and ignore it
+			pass
 		instructions = current_workflow_step.instructions
-		previous_url, next_url = helpers.get_bearings(project)		
+		previous_url, next_url = helpers.get_bearings(project)
+		sample_source_upload = False
+		if 'sample_source_upload' in extra:
+			sample_source_upload = True
+					
 		context = {'project_name': project.name, \
 				'existing_files':existing_files, \
 				'project_pk': project_pk, \
 				'instructions':instructions, \
 				'previous_page_url':previous_url, \
-                                'next_page_url':next_url}
+                                'next_page_url':next_url, \
+				'sample_source_upload':sample_source_upload \
+			}
 		return render(request, 'analysis_portal/upload_page.html', context)
 	else:        
 		return HttpResponseBadRequest('')
@@ -165,6 +176,8 @@ def add_new_file(request, project_pk):
     project = helpers.check_ownership(project_pk, request.user)
     if project is not None:
         newfile = request.POST.get('filename')
+        is_sample_source_upload = request.POST.get('sample_source_upload')
+        print 'is_sample_source_upload: %s' % is_sample_source_upload
         newfile = os.path.join(settings.UPLOAD_PREFIX, newfile)
         try:
             return helpers.add_datasource_to_database(project, newfile)

@@ -36,9 +36,7 @@ class Workflow(models.Model):
 	step_order = models.PositiveSmallIntegerField()
 	service = models.ForeignKey(Service)
 	instructions = models.CharField(max_length=5000, default='', blank=True, null=True)
-
-	class Meta:
-		unique_together = (('service','step_order'),)
+	extra = models.CharField(max_length=5000, default='', blank=True, null=True) # catch-all field for JSON string
 
 	class Meta:
 		unique_together = (('service','step_order'),)
@@ -102,15 +100,17 @@ class Sample(models.Model):
 
 class DataSource(models.Model):
 	"""
-	This is the information about the actual files.  They link back to a sample
+	This is the information about the actual files.
 	"""
-	sample = models.ForeignKey(Sample, null=True, blank=True)
 	project = models.ForeignKey(Project)
 	# the types of files we can take:
 	# the first value is what is stored in DB, the second is the 'display' value
 	FILE_TYPES = (
 		('fastq', 'FastQ'),
-		('bam', 'BAM')
+		('bam', 'BAM'),
+		('tsv','TSV'),
+		('csv','CSV'),
+		('excel','Excel'),
 	)
 	source_type = models.CharField(max_length=50, choices=FILE_TYPES)
 	filepath = models.CharField(max_length=500)
@@ -122,3 +122,8 @@ class DataSource(models.Model):
 		return '%s' % self.filepath
 
 
+class SampleDataSource(DataSource):
+	"""
+	This is for files that are associated with a sample
+	"""
+	sample = models.ForeignKey(Sample, null=True, blank=True)

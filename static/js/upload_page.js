@@ -13,6 +13,7 @@ var deleteCancelButton = document.getElementById("no-cancel");
 var annotateSampleBtn = document.getElementById("annotate-sample-button");
 var referenceElement;
 var tracker = {};
+var sampleSourceUploadIndicator = document.getElementById("sample-source-indicator").value;
 var progressSection = document.getElementById("upload-progress-section");
 var progressMapping = {}
 
@@ -406,7 +407,7 @@ function updateProject(file, signed_url){
 			}
 		}
 	}
-	xhr.send("filename=" + file.name);
+	xhr.send("filename=" + file.name + "&sample_source_upload=" + sampleSourceUploadIndicator);
 };
 
 var sample_icons = document.querySelectorAll(".rhs");
@@ -440,7 +441,8 @@ options = {
 	}
 	var data = {};
 	data["transfer_files"] = file_links;
-	xhr.send("transfer_files=" + file_links);	
+	
+	xhr.send("transfer_files=" + file_links + "&sample_source_upload=" + sampleSourceUploadIndicator);	
 	alert('Your data transfer has started.  We will send you an email when it has completed.  Simply refresh this page once you receive the email.');
     },
     // Optional. Called when the user closes the dialog without selecting a file

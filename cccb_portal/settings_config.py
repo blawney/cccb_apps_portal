@@ -196,10 +196,19 @@ DEFAULT_PWD = config_parser.get(environment, 'default_pwd', raw=True)
 TEMP_DIR = os.path.join(BASE_DIR, 'temp')
 
 # regular expression for matching fastq files:
-FASTQ_GZ_PATTERN = '_[rR][1,2].f.*gz'
+FASTQ_GZ_PATTERN = '_[rR][1,2]\.f.*.\gz$'
 
 # regular expression for matching BAM files:
-BAMFILE_PATTERN = '.bam'
+BAMFILE_PATTERN = '\.bam$'
+
+# regular expression for matching excel files:
+EXCEL_PATTERN = '\.xlsx?$'
+
+# regular expression for matching tab-delimited files:
+TSV_PATTERN = '\.tsv$'
+
+# regular expression for matching comma-separated files:
+CSV_PATTERN = '\.csv$'
 
 #Celery settings:
 #CELERY_BROKER_URL = 'redis://localhost:6379/0'

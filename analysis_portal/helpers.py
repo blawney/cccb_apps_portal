@@ -1,4 +1,4 @@
-from client_setup.models import Project, Sample, DataSource
+from client_setup.models import Project, Sample, DataSource, SampleDataSource
 from django.core.exceptions import ObjectDoesNotExist, SuspiciousOperation
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.conf import settings
@@ -31,12 +31,27 @@ def check_ownership(project_pk, user):
 def determine_filetype(filename):
 	#TODO make the patterns into a dictionary so this could be more generalized
 	basename = os.path.basename(filename)
+
 	fq_match = re.search(settings.FASTQ_GZ_PATTERN, basename)
 	if fq_match:
 		return ('fastq', basename[:-len(fq_match.group(0))])
+
 	bam_match = re.search(settings.BAMFILE_PATTERN, basename, re.IGNORECASE)
 	if bam_match:
 		return ('bam', basename[:-len(bam_match.group(0))])
+
+	excel_match = re.search(settings.EXCEL_PATTERN, basename, re.IGNORECASE)
+	if excel_match:
+		return ('excel', basename[:-len(bam_match.group(0))])
+
+	tsv_match = re.search(settings.TSV_PATTERN, basename, re.IGNORECASE)
+	if tsv_match:
+		return ('tsv', basename[:-len(bam_match.group(0))])
+
+	csv_match = re.search(settings.CSV_PATTERN, basename, re.IGNORECASE)
+	if csv_match:
+		return ('csv', basename[:-len(bam_match.group(0))])
+
 	raise UndeterminedFiletypeException('Could not determine the filetype- please consult the instructions on naming your files.')
 
 
