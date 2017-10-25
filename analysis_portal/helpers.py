@@ -55,7 +55,7 @@ def determine_filetype(filename):
 	raise UndeterminedFiletypeException('Could not determine the filetype- please consult the instructions on naming your files.')
 
 
-def add_datasource_to_database(project, newfile):
+def add_datasource_to_database(project, newfile, is_sample_datasource_upload):
     """
     This updates the database
     """
@@ -66,20 +66,27 @@ def add_datasource_to_database(project, newfile):
     else:
         filetype, samplename = determine_filetype(newfile)
 
-        new_ds = DataSource(project=project, source_type = filetype, filepath=newfile)
-        new_ds.save()
-
-        # check for existing sample
-        project_samples = project.sample_set.all()
-        if any([s.name==samplename for s in project_samples]):
-            s = Sample.objects.get(project=project, name=samplename)
+        if is_sample_datasource_upload:
+            print 'was datasource related to a sample'
+            new_ds = SampleDataSource(project=project, source_type = filetype, filepath=newfile)
+            new_ds.save()
         else:
-            s = Sample(name=samplename, metadata='', project=project)
-            s.save()
+            print 'was a sample-agnostic datasource'
+            new_ds = DataSource(project=project, source_type = filetype, filepath=newfile)
+            new_ds.save()
 
-        # add the datasource to the sample
-        new_ds.sample = s
-        new_ds.save()
+        # add the datasource to the sample if it's actually a sample-related datasource
+        if is_sample_datasource_upload:
+            print 'since datasource was related to a sample, create one if it does not exist'
+            # check for existing sample
+            project_samples = project.sample_set.all()
+            if any([s.name==samplename for s in project_samples]):
+                s = Sample.objects.get(project=project, name=samplename)
+            else:
+                s = Sample(name=samplename, metadata='', project=project)
+                s.save()
+            new_ds.sample = s
+            new_ds.save()
         return HttpResponse('')
 
 

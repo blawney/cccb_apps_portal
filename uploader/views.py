@@ -110,7 +110,7 @@ def dropbox_transfer(request, project_pk):
 					destination = os.path.join(project.bucket, settings.UPLOAD_PREFIX, file_name)
 					destination = destination.replace(' ', '_')
 					print 'make transfer with %s' % file_name
-					all_transfers.append(tasks.dropbox_transfer_to_bucket.s(f, destination, project.pk))
+					all_transfers.append(tasks.dropbox_transfer_to_bucket.s(f, destination, project.pk, is_sample_datasource_upload))
 				except helpers.UndeterminedFiletypeException as ex:
 					print 'problem with %s' % file_name
 					misnamed_file_list.append(file_name)

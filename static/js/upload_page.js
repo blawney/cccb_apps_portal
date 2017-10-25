@@ -407,6 +407,7 @@ function updateProject(file, signed_url){
 			}
 		}
 	}
+	console.log(sampleSourceUploadIndicator);
 	xhr.send("filename=" + file.name + "&sample_source_upload=" + sampleSourceUploadIndicator);
 };
 

@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
 import views
-import analysis.setup_views as analysi_setup_views
+import analysis_portal.setup_views as analysi_setup_views
 
 urlpatterns = [
     url(r'^upload/(?P<project_pk>[0-9]+)/$', views.pooled_crispr_fastq_upload, name='pooled_crispr_fastq_upload'),

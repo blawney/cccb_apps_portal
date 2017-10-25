@@ -3,11 +3,11 @@ from __future__ import unicode_literals
 
 from django.shortcuts import render
 from django.conf import settings
-
+import os
 import sys
 sys.path.append(os.path.abspath('..'))
-from analysis import setup_views, helpers
-
+from analysis_portal import setup_views, helpers
+from django.contrib.auth.decorators import login_required
 
 def pooled_crispr_fastq_upload(request, project_pk):
 	return setup_views.upload_page(request, project_pk)

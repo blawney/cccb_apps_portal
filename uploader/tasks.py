@@ -10,7 +10,7 @@ from client_setup.models import Project
 HTML_BODY = '<html><body>%s</body></html>'
 
 @task(name='dropbox_transfer_to_bucket')
-def dropbox_transfer_to_bucket(source_link, destination, project_pk):
+def dropbox_transfer_to_bucket(source_link, destination, project_pk, is_sample_datasource_upload):
 	project = Project.objects.get(pk=project_pk)
 	cmd = 'wget -q -O - "%s" | gsutil cp - gs://%s' % (source_link, destination)
 	print cmd
@@ -25,7 +25,7 @@ def dropbox_transfer_to_bucket(source_link, destination, project_pk):
 	else:
 		print 'Done transferring from %s' % source_link
 		try:
-			helpers.add_datasource_to_database(project, destination[len(project.bucket)+1:])
+			helpers.add_datasource_to_database(project, destination[len(project.bucket)+1:], is_sample_datasource_upload)
 		except helpers.UndeterminedFiletypeException as ex:
 		        project_owner = project.owner.email
 			message = 'The file type of your Dropbox file (%s) could not be determined. Please consult the instructions on how to name files for the application. Then try again.' % source_link.split('/')[-1]

@@ -11,6 +11,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbid
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from client_setup.models import Project, Sample, DataSource, Organism
+from django.core.exceptions import ObjectDoesNotExist
 
 import sys
 sys.path.append(os.path.abspath('..'))
@@ -122,14 +123,6 @@ def upload_page(request, project_pk):
 	"""
 	project = helpers.check_ownership(project_pk, request.user)
 	if project is not None:
-		uploaded_files = project.datasource_set.all() # gets the files with this as their project
-		existing_files = []
-		for f in uploaded_files:
-			if f.sample:
-				samplename = f.sample.name
-			else:
-				samplename = None	
-			existing_files.append(FileDisplay(samplename, f.pk, f.filepath))
 		service = project.service
 		view_name = request.resolver_match.url_name
 		current_workflow_step = service.workflow_set.get(step_url=view_name)
@@ -138,11 +131,32 @@ def upload_page(request, project_pk):
 		except ValueError as ex:
 			# if no extra information was specified for this step, catch this exception and ignore it
 			pass
-		instructions = current_workflow_step.instructions
-		previous_url, next_url = helpers.get_bearings(project)
 		sample_source_upload = False
 		if 'sample_source_upload' in extra:
 			sample_source_upload = True
+
+		existing_files = []
+		if sample_source_upload:
+			uploaded_files = project.datasource_set.all() # gets the files with this as their project
+			sample_datasource_objs = []
+			for f in uploaded_files:
+				try:
+					ds = f.sampledatasource
+					if ds.sample:
+						samplename = ds.sample.name
+					else:
+						samplename = None
+					existing_files.append(FileDisplay(samplename, f.pk, f.filepath))
+				except ObjectDoesNotExist as ex:
+					print 'object was a regular DataSource, NOT a SampleDataSource. Skip'
+					pass
+		else:
+			uploaded_files = project.datasource_set.all() # gets the files with this as their project
+			for f in uploaded_files:
+				existing_files.append(FileDisplay(None, f.pk, f.filepath))
+
+		instructions = current_workflow_step.instructions
+		previous_url, next_url = helpers.get_bearings(project)
 					
 		context = {'project_name': project.name, \
 				'existing_files':existing_files, \
@@ -175,12 +189,13 @@ def change_project_name(request, project_pk):
 def add_new_file(request, project_pk):
     project = helpers.check_ownership(project_pk, request.user)
     if project is not None:
+        print request.POST
         newfile = request.POST.get('filename')
         is_sample_source_upload = request.POST.get('sample_source_upload')
         print 'is_sample_source_upload: %s' % is_sample_source_upload
         newfile = os.path.join(settings.UPLOAD_PREFIX, newfile)
         try:
-            return helpers.add_datasource_to_database(project, newfile)
+            return helpers.add_datasource_to_database(project, newfile, is_sample_source_upload)
         except helpers.UndeterminedFiletypeException as ex:
             return HttpResponseBadRequest(ex.message)
     else:

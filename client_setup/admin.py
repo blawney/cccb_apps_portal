@@ -19,7 +19,7 @@ class SampleAdmin(admin.ModelAdmin):
 
 class DataSourceAdmin(admin.ModelAdmin):
 	list_display = ('project','source_type', 'filepath')
-	list_editable = ('source_type', 'filepath', 'project')
+	list_editable = ('source_type', 'filepath')
 
 class SampleDataSourceAdmin(admin.ModelAdmin):
 	list_display = ('sample', 'project','source_type', 'filepath')
