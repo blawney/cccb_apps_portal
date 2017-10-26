@@ -24,9 +24,23 @@ from django.core.exceptions import ObjectDoesNotExist
 
 import config_parser
 
-#from . import tasks
+from . import tasks
 
 CALLBACK_URL = 'analysis/notify/'
+
+def handle(project, request):
+
+    tasks.finalize(project.pk)
+
+    project.in_progress = False
+    project.paused_for_user_input = False
+    project.completed = True
+    project.status_message = 'Completed quantification'
+    project.next_action_text = '-'
+    project.next_action_url = ''
+    project.has_downloads = True
+    project.save()
+
 
 def launch(project_pk, config_params):
 

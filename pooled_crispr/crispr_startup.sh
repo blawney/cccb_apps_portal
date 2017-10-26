@@ -6,7 +6,8 @@ apt-get update && \
          apt-transport-https \
          ca-certificates \
          curl \
-         software-properties-common
+         software-properties-common \
+         python-pip
 
 curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | apt-key add -
 add-apt-repository \
@@ -14,6 +15,10 @@ add-apt-repository \
 
 apt-get update && \
     apt-get install -y docker-ce
+
+# install some python libraries for communicating back:
+pip install pycrypto
+pip install google-api-python-client
 
 # Define the docker containers that drive this:
 SAMTOOLS=biocontainers/samtools:1.3
@@ -106,3 +111,5 @@ RESULT_BUCKET=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadat
 gsutil cp $OUTFILE $RESULT_BUCKET/$OUTFILE
 gsutil cp *$SORT_BAM_SUFFIX $RESULT_BUCKET/
 gsutil cp $LIBRARY_FASTA $RESULT_BUCKET/
+
+python $SCRIPTS_DIR/communicate.py
