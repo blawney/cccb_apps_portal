@@ -20,6 +20,7 @@ from download.models import Resource
 
 from django.conf import settings
 from django.urls import reverse
+from django.core.exceptions import ObjectDoesNotExist
 
 import config_parser
 
@@ -45,14 +46,28 @@ def launch(project_pk, config_params):
     storage_client = storage.Client()
     bucket = storage_client.get_bucket(bucket_name)
     all_contents = bucket.list_blobs()
-    uploads = [x.name for x in all_contents if x.name.startswith(config_params['upload_folder'])]
-    
+    uploads = []
+    filesizes = []
+    for x in all_contents:
+        if x.name.startswith(config_params['upload_folder']):
+            uploads.append(x.name)
+            filesizes.append(x.size)
+
     # compare-- it's ok if there were more files in the bucket
     bucket_set = set(uploads)
     datasource_set = set(datasource_paths)
     if len(datasource_set.difference(uploads)) > 0:
         # TODO raise exception
         pass
+
+    # the sum of the uploads (in gb).  We need to be able to load the fastq and create BAM files, etc. so we need
+    # to ensure we have sufficient disk space on the new VM.  
+    total_upload_size = pd.np.sum(filesizes)/1e9
+    necessary_size = float(config_params['size_buffer_factor'])*total_upload_size 
+    if necessary_size > config_params['min_disk_size']:
+        disk_size = int(necessary_size)
+    else:
+        disk_size = int(config_params['min_disk_size'])
 
     # the output bucket where results go
     result_bucket_name = os.path.join(bucket_name, config_params['output_bucket'])
@@ -79,13 +94,13 @@ def launch(project_pk, config_params):
     scripts_bucket = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['scripts_dir'])
     cccb_project_pk = project.pk
     callback_url = '%s/%s' % (settings.HOST, CALLBACK_URL)
-    startup_script = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['startup_script'])
+    startup_script_url = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['scripts_dir'], config_params['startup_script'])
     notification_email_addresses = settings.CCCB_EMAIL_CSV
     token = settings.TOKEN
     enc_key = settings.ENCRYPTION_KEY
     instance_name = 'pooled-crispr-worker-%s' % datetime.datetime.now().strftime('%m%d%y%H%M%S')
 
-    google_project = settings.GOOGLE_PROJECT	
+    google_project = settings.GOOGLE_PROJECT
     source_disk_image = config_params['image_name']
     machine_type = "zones/%s/machineTypes/%s" % (settings.GOOGLE_DEFAULT_ZONE, config_params['machine_type']) 
 
@@ -100,6 +115,7 @@ def launch(project_pk, config_params):
                 'autoDelete': True,
                 'initializeParams': {
                     'sourceImage': source_disk_image,
+                    'diskSizeGb': disk_size,
                 }
             }
         ],
@@ -131,7 +147,7 @@ def launch(project_pk, config_params):
                 'value': startup_script_url
             },
             {
-              'key':'result_bucket_name',
+              'key':'result_bucket',
               'value': result_bucket_name
             },
             {
@@ -140,7 +156,7 @@ def launch(project_pk, config_params):
             },
             {
               'key':'google_zone',
-              'value': zone
+              'value': settings.GOOGLE_DEFAULT_ZONE
             },
             {
               'key':'project_pk',
@@ -150,15 +166,15 @@ def launch(project_pk, config_params):
                 'key':'callback_url',
                 'value': callback_url
             },
-	        {
+            {
               'key':'email_utils',
               'value': email_utils
             },
-	        {
+            {
               'key':'email_credentials',
               'value': email_credentials
             },
-	        {
+            {
               'key':'scripts-directory',
               'value': scripts_bucket
             },
@@ -169,13 +185,26 @@ def launch(project_pk, config_params):
             {
               'key':'token',
               'value':token
-            },            {
+            },    
+            {
               'key':'enc_key',
               'value':enc_key
             },
-	        {
+            {
               'key':'library-file',
-              'value': 
+              'value': library
+            },
+            {
+              'key':'fastq-files',
+              'value': fastq_string
+            },
+            {
+              'key':'sample-names',
+              'value': sample_string
+            },
+            {
+              'key':'merged-counts-file',
+              'value': merged_counts_filename
             },
 
           ]

@@ -1,4 +1,19 @@
 #!/bin/bash
+set -v
+
+apt-get update && \
+     apt-get install -y \
+         apt-transport-https \
+         ca-certificates \
+         curl \
+         software-properties-common
+
+curl -fsSL https://download.docker.com/linux/$(. /etc/os-release; echo "$ID")/gpg | apt-key add -
+add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/$(. /etc/os-release; echo "$ID") $(lsb_release -cs) stable"
+
+apt-get update && \
+    apt-get install -y docker-ce
 
 # Define the docker containers that drive this:
 SAMTOOLS=biocontainers/samtools:1.3
@@ -61,9 +76,11 @@ docker run -v $WD:/workspace $BOWTIE2 bowtie2-build /workspace/$LIBRARY_FASTA /w
 
 COUNT_SUFFIX=".counts"
 SORT_BAM_SUFFIX="sorted.bam"
-for FQ in "${FQ_FILES[@]}"; do
-
-	SAMPLE=$(basename $FQ .fastq.gz)
+SAMPLE_LIST_STR=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/attributes/sample-names)
+SAMPLE_NAMES=( $SAMPLE_LIST_STR )
+for k in "${!FQ_FILES[@]}"; do
+	FQ="${FQ_FILES[$k]}"
+	SAMPLE="${SAMPLE_NAMES[$k]}"
 	SORTED_BAM=$SAMPLE"."$SORT_BAM_SUFFIX
 
 	# do the alignments, change to BAM, sort BAM:
@@ -85,7 +102,7 @@ OUTFILE=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/i
 docker run -v $WD:/workspace -v $SCRIPTS_DIR:/scripts $PYTHON python /scripts/merge_counts.py /workspace $COUNT_SUFFIX $OUTFILE
 
 # Copy everything back to the cloud storage:
-RESULT_BUCKET=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/attributes/result-bucket)
+RESULT_BUCKET=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/attributes/result_bucket)
 gsutil cp $OUTFILE $RESULT_BUCKET/$OUTFILE
 gsutil cp *$SORT_BAM_SUFFIX $RESULT_BUCKET/
 gsutil cp $LIBRARY_FASTA $RESULT_BUCKET/
