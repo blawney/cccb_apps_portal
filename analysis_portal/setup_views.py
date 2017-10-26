@@ -18,6 +18,7 @@ sys.path.append(os.path.abspath('..'))
 from rnaseq import rnaseq_process
 from variant_calling_from_fastq import variant_process_submission_from_fastq
 from variant_calling_from_bam import variant_process_submission_from_bam
+from pooled_crispr import pooled_crispr_process
 
 import helpers
 
@@ -126,9 +127,11 @@ def upload_page(request, project_pk):
 		service = project.service
 		view_name = request.resolver_match.url_name
 		current_workflow_step = service.workflow_set.get(step_url=view_name)
+		extra = {}
 		try:
 			extra = json.loads(current_workflow_step.extra)
 		except ValueError as ex:
+			print 'was no extra info for this workflow step'
 			# if no extra information was specified for this step, catch this exception and ignore it
 			pass
 		sample_source_upload = False
@@ -153,7 +156,12 @@ def upload_page(request, project_pk):
 		else:
 			uploaded_files = project.datasource_set.all() # gets the files with this as their project
 			for f in uploaded_files:
-				existing_files.append(FileDisplay(None, f.pk, f.filepath))
+				try:
+					# if the uploaded file was NOT associated with a sample, it will throw an exception
+					ds = f.sampledatasource
+				except ObjectDoesNotExist as ex:
+					# catch the exception, which means we have a sample-agnostic file
+					existing_files.append(FileDisplay(None, f.pk, f.filepath))
 
 		instructions = current_workflow_step.instructions
 		previous_url, next_url = helpers.get_bearings(project)
@@ -192,6 +200,11 @@ def add_new_file(request, project_pk):
         print request.POST
         newfile = request.POST.get('filename')
         is_sample_source_upload = request.POST.get('sample_source_upload')
+        if is_sample_source_upload.lower() == 'true':
+            is_sample_source_upload = True
+        else:
+            is_sample_source_upload = False
+            
         print 'is_sample_source_upload: %s' % is_sample_source_upload
         newfile = os.path.join(settings.UPLOAD_PREFIX, newfile)
         try:
@@ -229,17 +242,29 @@ def annotate_files_and_samples(request, project_pk):
 	project = helpers.check_ownership(project_pk, request.user)
 	if project is not None:
 		zero_uploaded_files = True
-		uploaded_files = project.datasource_set.all() # gets the files with this as their project
-		if len(uploaded_files) > 0:
+		# gets all files associated with project.  Some may be sample-specific, some not
+		uploaded_files = project.datasource_set.all()
+
+		# filter down to sample-specific files
+		sample_datasource_objs = []
+		for f in uploaded_files:
+			try:
+				ds = f.sampledatasource
+				sample_datasource_objs.append(f)
+			except ObjectDoesNotExist as ex:
+				print 'object was a regular DataSource, NOT a SampleDataSource.  Skip'
+
+		if len(sample_datasource_objs) > 0:
 		    zero_uploaded_files = False
 		existing_samples = project.sample_set.all() # any samples that were already defined
 
 		unassigned_files = []
 		assigned_files = {x.name:[] for x in existing_samples}
-		for f in uploaded_files:
+		for f in sample_datasource_objs:
+			fds = f.sampledatasource
 			fdisplay = FileDisplay('', f.pk, f.filepath)
-			if f.sample in existing_samples:
-				assigned_files[f.sample.name].append(fdisplay)
+			if fds.sample in existing_samples:
+				assigned_files[fds.sample.name].append(fdisplay)
 			else:
 				unassigned_files.append(fdisplay)
 		previous_url, next_url = helpers.get_bearings(project)
@@ -330,7 +355,7 @@ def summary(request, project_pk):
 		full_mapping = {}
 		all_samples = project.sample_set.all()
 		for s in all_samples:
-			data_sources = s.datasource_set.all()	
+			data_sources = s.sampledatasource_set.all()	
 			full_mapping[s] = ', '.join([os.path.basename(x.filepath) for x in data_sources])
 		previous_url, next_url = helpers.get_bearings(project)
 		context = {'mapping':full_mapping, \
@@ -353,8 +378,8 @@ def kickoff(request, project_pk):
 	if project is not None:
 		project_samples = project.sample_set.all()
 		if len(project_samples) <= project.max_sample_number:
+			pk = project.pk
 			if project.service.name == 'rnaseq':
-				pk = project.pk
 				rnaseq_process.start_analysis(pk)
 				project.in_progress = True
 				project.start_time = datetime.datetime.now()
@@ -363,11 +388,11 @@ def kickoff(request, project_pk):
 				project.next_action_url = reverse('in_progress_view', kwargs={'project_pk':pk})
 				project.save()
 			elif project.service.name == 'variant_calling_from_bam':
-				pk = project.pk
 				variant_process_submission_from_bam.start_analysis(pk)
                         elif project.service.name == 'variant_calling_from_fastq':
-                                pk = project.pk
                                 variant_process_submission_from_fastq.start_analysis(pk)
+                        elif project.service.name == 'pooled_crispr':
+				pooled_crispr_process.start_analysis(pk)
 			else:
 				print 'Could not figure out project type'
 			return redirect('analysis_home_view')

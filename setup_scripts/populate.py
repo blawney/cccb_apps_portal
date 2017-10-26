@@ -178,7 +178,7 @@ workflow_step.save()
 
 workflow_step = Workflow.objects.get_or_create(step_order=1, service=svc)[0]
 workflow_step.step_url = 'pooled_crispr_fastq_upload'
-workflow_step.upload_instructions = """<p>Manage your files here. Upload or remove your compressed, 
+workflow_step.instructions = """<p>Manage your files here. Upload or remove your compressed, 
 	FASTQ-format files as necessary.
 
 	<p class="bolded">FastQ file upload:</p>  
@@ -195,7 +195,7 @@ workflow_step.save()
 
 workflow_step = Workflow.objects.get_or_create(step_order=2, service=svc)[0]
 workflow_step.step_url = 'pooled_crispr_library_upload'
-workflow_step.upload_instructions = """
+workflow_step.instructions = """
 	<p>
 	Upload your target library here.  We accept files with Excel (xls, xlsx), comma-separated (CSV), or tab-separated (TSV)
 	formats.  Note that Excel will often alter gene names like MARCH4, interpreting it as a date (e.g. March 4, 2017).  This will cause the name to look like "03-04-2017 00:00:00" or 

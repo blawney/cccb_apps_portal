@@ -29,7 +29,7 @@ window.addEventListener("drop", function(e){
 annotateSampleBtn.addEventListener("click", function(e){
 	var pk = document.getElementById("pk-field").value;
 	var next_url = document.getElementById("next-page").value;
-	window.location.assign(next_url + "/" + pk + "/")
+	window.location.assign(next_url)
 });
 
 function rm_upload(e){
@@ -73,7 +73,10 @@ function traverseFiles(files){
 	    var f = files[i].name;
 	    var fastq_match = f.replace(/.*_r[1,2].f.*.gz/i, '');
 	    var bam_match = f.replace(/.*.bam/i, '');
-	    if(fastq_match == '' | bam_match == ''){
+	    var tsv_match = f.replace(/.*.tsv/i, '');
+	    var csv_match = f.replace(/.*.csv/i, '');
+	    var excel_match = f.replace(/.*.xlsx?/i, '');
+	    if(fastq_match == '' | bam_match == '' | tsv_match == '' | csv_match == '' | excel_match == ''){
             	trackFile(files[i]);
 	    }else{
   	        alert('Your file was not named correctly. Please see the instructions');

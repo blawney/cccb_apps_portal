@@ -42,15 +42,15 @@ def determine_filetype(filename):
 
 	excel_match = re.search(settings.EXCEL_PATTERN, basename, re.IGNORECASE)
 	if excel_match:
-		return ('excel', basename[:-len(bam_match.group(0))])
+		return ('excel', basename[:-len(excel_match.group(0))])
 
 	tsv_match = re.search(settings.TSV_PATTERN, basename, re.IGNORECASE)
 	if tsv_match:
-		return ('tsv', basename[:-len(bam_match.group(0))])
+		return ('tsv', basename[:-len(tsv_match.group(0))])
 
 	csv_match = re.search(settings.CSV_PATTERN, basename, re.IGNORECASE)
 	if csv_match:
-		return ('csv', basename[:-len(bam_match.group(0))])
+		return ('csv', basename[:-len(csv_match.group(0))])
 
 	raise UndeterminedFiletypeException('Could not determine the filetype- please consult the instructions on naming your files.')
 

@@ -20,8 +20,7 @@
             <div class="panel-heading">
                 <h4>Pre-analysis summary</h4>
             </div>
-            <p>Library/target file: {{library_file.name}}</p>
-
+            <p class="bolded">Library/target file: {{library_filename}}</p>
             <table id="pre-analysis-summary-table" class="table table-striped">
                 <thead>
                     <tr>
@@ -33,7 +32,7 @@
                     {% for sample, files in mapping.iteritems %}
                     <tr>
                         <td>{{sample.name}}</td>
-			<td>{{ file }}</td>
+			<td>{{ files }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
