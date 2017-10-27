@@ -37,6 +37,7 @@ class Workflow(models.Model):
 	service = models.ForeignKey(Service)
 	instructions = models.CharField(max_length=5000, default='', blank=True, null=True)
 	extra = models.CharField(max_length=5000, default='', blank=True, null=True) # catch-all field for JSON string
+	title_text = models.CharField(max_length=500, default='', blank=True, null=True)
 
 	class Meta:
 		unique_together = (('service','step_order'),)
@@ -68,10 +69,10 @@ class Project(models.Model):
 	start_time = models.DateTimeField(blank=True, null=True)
 	finish_time = models.DateTimeField(blank=True, null=True)
 	bucket = models.CharField(max_length=63) # default max length for a bucket is 63
-	next_action_text = models.CharField(max_length = 100, default='')
+	next_action_text = models.CharField(max_length = 100, default='', blank=True)
 	# Note that next_action_url is subtly different than the URLs given by the workflow associated with a Service
 	# Those tell us the workflow order.  This url provides a way to navigate from the 'project home' page
-	next_action_url = models.CharField(max_length = 255, default='')
+	next_action_url = models.CharField(max_length = 255, default='', blank=True)
 	step_number = models.PositiveSmallIntegerField(null=True) # for tracking which step of the workflow we are on
 	has_downloads = models.BooleanField(default=False)
 	max_sample_number = models.IntegerField(default=50)

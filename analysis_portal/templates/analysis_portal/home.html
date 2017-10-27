@@ -47,16 +47,22 @@
                                     </td>
 				-->
 				    <td>
+						{% if p.next_action_url|length > 0 %}
 						{{p.next_action_text}}
 						<a href="{{p.next_action_url}}">
         	                                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
 						</a>
+						{% else %}
+						<span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
+						{% endif %}
 				    </td>
 				    <td>
 						{% if p.has_downloads %}
 						<a href="{{p.download_url}}">
         	                                <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
 						</a>
+						{% else %}
+						<span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
 						{% endif %}
 				    </td>
                                 </tr>

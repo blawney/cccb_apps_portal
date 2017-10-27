@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
-from client_setup.models import Project, Sample, DataSource, Organism
+from client_setup.models import Project, Sample, DataSource, Organism, SampleDataSource
 from django.core.exceptions import ObjectDoesNotExist
 
 import sys
@@ -172,7 +172,8 @@ def upload_page(request, project_pk):
 				'instructions':instructions, \
 				'previous_page_url':previous_url, \
                                 'next_page_url':next_url, \
-				'sample_source_upload':sample_source_upload \
+				'sample_source_upload':sample_source_upload, \
+				'title_text': current_workflow_step.title_text \
 			}
 		return render(request, 'analysis_portal/upload_page.html', context)
 	else:        
@@ -312,7 +313,7 @@ def rm_sample(request, project_pk):
 		s = Sample.objects.get(name=name, project=project)
 
 		# get all the data sources assigned to this sample and set their sample attribute to be None
-		ds_set = s.datasource_set.all()
+		ds_set = s.sampledatasource_set.all()
 		for ds in ds_set:
 			ds.sample = None
 			ds.save()
@@ -337,7 +338,7 @@ def map_files_to_samples(request, project_pk):
 			print sample_obj
 			for f in files:
 				f = os.path.join(settings.UPLOAD_PREFIX,f)
-				ds = DataSource.objects.get(filepath=f, project=project)
+				ds = SampleDataSource.objects.get(filepath=f, project=project)
 				ds.sample = sample_obj
 				ds.save()
 		return HttpResponse('')
@@ -393,6 +394,13 @@ def kickoff(request, project_pk):
                                 variant_process_submission_from_fastq.start_analysis(pk)
                         elif project.service.name == 'pooled_crispr':
 				pooled_crispr_process.start_analysis(pk)
+				project.in_progress = True
+				project.start_time = datetime.datetime.now()
+				project.status_message = 'Performing quantification'
+				project.next_action_text = 'Processing...'
+				project.next_action_url = ''
+				project.save()
+
 			else:
 				print 'Could not figure out project type'
 			return redirect('analysis_home_view')

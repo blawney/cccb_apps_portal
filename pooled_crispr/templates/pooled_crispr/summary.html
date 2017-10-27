@@ -20,7 +20,9 @@
             <div class="panel-heading">
                 <h4>Pre-analysis summary</h4>
             </div>
-            <p class="bolded">Library/target file: {{library_filename}}</p>
+	    <div class="simple-pad">
+            <label for="library-filename">Library/target file:</label><span id="library-filename"> {{library_filename}}</span>
+		</div>
             <table id="pre-analysis-summary-table" class="table table-striped">
                 <thead>
                     <tr>

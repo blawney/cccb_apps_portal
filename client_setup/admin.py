@@ -30,8 +30,8 @@ class OrganismAdmin(admin.ModelAdmin):
 	list_editable = ('description', 'service')
 
 class WorkflowAdmin(admin.ModelAdmin):
-	list_display = ('step_order','step_url', 'service', 'instructions')
-	list_editable = ('step_url',)
+	list_display = ('step_order','step_url', 'service', 'instructions', 'title_text')
+	list_editable = ('step_url', 'title_text')
 
 admin.site.register(Service, ServiceAdmin)
 admin.site.register(Project, ProjectAdmin)

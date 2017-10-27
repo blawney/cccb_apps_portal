@@ -310,7 +310,7 @@ function uploadChunk(file, signed_url, i, start, end, size, BYTES_PER_CHUNK, fil
 				updateProject(file, signed_url);
 			}
 			else{
-				console.log('something unexpected happened');
+				console.log('something unexpected happened with upload of file ' + file);
 			}
 		}
 	};
