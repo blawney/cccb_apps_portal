@@ -167,7 +167,11 @@ LOGIN_REDIRECT_URL = '/analysis/home/'
 SITE_ID = 1
 
 # the base of our address:
-HOST = '%s://%s' % (config_parser.get(environment, 'protocol'), config_parser.get(environment, 'domain'))
+development_port = os.getenv('DEVPORT')
+if development_port is None:
+	HOST = '%s://%s' % (config_parser.get(environment, 'protocol'), config_parser.get(environment, 'domain'))
+else:
+	HOST = '%s://%s:%s' % (config_parser.get(environment, 'protocol'), config_parser.get(environment, 'domain'), development_port)
 
 # for creating buckets-- all the app buckets will have this prefix
 BUCKET_PREFIX = 'cccb-app-service'
