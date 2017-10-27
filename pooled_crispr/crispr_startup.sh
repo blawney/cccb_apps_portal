@@ -110,6 +110,7 @@ docker run -v $WD:/workspace -v $SCRIPTS_DIR:/scripts $PYTHON python /scripts/me
 RESULT_BUCKET=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/attributes/result_bucket)
 gsutil cp $OUTFILE $RESULT_BUCKET/$OUTFILE
 gsutil cp *$SORT_BAM_SUFFIX $RESULT_BUCKET/
+gsutil cp *$SORT_BAM_SUFFIX".bai" $RESULT_BUCKET/
 gsutil cp $LIBRARY_FASTA $RESULT_BUCKET/
 
 python $SCRIPTS_DIR/communicate.py

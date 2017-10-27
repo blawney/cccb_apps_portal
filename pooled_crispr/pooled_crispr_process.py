@@ -30,7 +30,7 @@ CALLBACK_URL = 'analysis/notify/'
 
 def handle(project, request):
 
-    tasks.finalize(project.pk)
+    tasks.finalize.delay(project.pk)
 
     project.in_progress = False
     project.paused_for_user_input = False

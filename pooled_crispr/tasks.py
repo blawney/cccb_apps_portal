@@ -4,8 +4,11 @@ from google.cloud import storage
 from django.conf import settings
 from download.models import Resource
 from client_setup.models import Project
-import config_parser
+import pooled_crispr.config_parser as cp_
 import email_utils
+import subprocess
+import re
+import os
 from django.conf import settings
 
 LINK_ROOT = settings.PUBLIC_STORAGE_ROOT + '%s/%s'
@@ -20,7 +23,7 @@ def finalize(project_pk):
 	all_contents = bucket.list_blobs()
 	all_contents = [x for x in all_contents] # turn iterator into list
 
-	config_params = config_parser.parse_config()
+	config_params = cp_.parse_config()
 	
 	# get the files that are in the result folder:
 	outfiles = {}
@@ -43,15 +46,15 @@ def finalize(project_pk):
 
 			# register the files with the download app
 			public_link = LINK_ROOT % (bucket.name, f.name)
-		r = Resource(project=project, basename = os.path.basename(f.name), public_link = public_link, resource_type = key)
-		r.save()
+			r = Resource(project=project, basename = os.path.basename(f.name), public_link = public_link, resource_type = key)
+			r.save()
 
-		set_meta_cmd = 'gsutil setmeta -h "Content-Disposition: attachment; filename=%s" gs://%s/%s' % (os.path.basename(f.name), bucket_name, f.name)
-		print 'set meta cmd: %s' % set_meta_cmd
-		process = subprocess.Popen(set_meta_cmd, shell = True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-		stdout, stderr = process.communicate()
-		if process.returncode != 0:
-			print 'Error while setting metadata on %s. STDERR was:\n %s' % (f.name, stderr)
+			set_meta_cmd = 'gsutil setmeta -h "Content-Disposition: attachment; filename=%s" gs://%s/%s' % (os.path.basename(f.name), bucket_name, f.name)
+			print 'set meta cmd: %s' % set_meta_cmd
+			process = subprocess.Popen(set_meta_cmd, shell = True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+			stdout, stderr = process.communicate()
+			if process.returncode != 0:
+				print 'Error while setting metadata on %s. STDERR was:\n %s' % (f.name, stderr)
 
 	print 'send notification email'
 	message_html = write_completion_message(project)
