@@ -17,7 +17,7 @@ from download.models import Resource
 from client_setup.models import Project
 import pandas as pd
 
-LINK_ROOT = 'https://storage.cloud.google.com/%s/%s' #TODO put this in settings.py?  can a non-app access?
+LINK_ROOT = settings.PUBLIC_STORAGE_ROOT + '%s/%s'
 
 @task(name='deseq_call')
 def deseq_call(deseq_cmd, results_dir, cloud_dge_dir, count_matrix_filename, annotation_filename, contrast_name, bucket_name, project_pk):
