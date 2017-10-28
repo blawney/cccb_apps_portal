@@ -3,6 +3,7 @@ import os
 import subprocess
 
 def make_call(command):
+	print 'Issue: %s' % command
 	process = subprocess.Popen(command, shell = True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 	stdout, stderr = process.communicate()
 	if process.returncode != 0:
@@ -33,5 +34,5 @@ command = 'gsutil -m cp -R static gs://%s/' % static_bucket
 make_call(command)
 
 # set public read on those resources:
-command = 'gsutil -m acl ch -R -u AllUsers:R gs://%s'
+command = 'gsutil -m acl ch -R -u AllUsers:R gs://%s' % static_bucket
 make_call(command)

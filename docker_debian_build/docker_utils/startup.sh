@@ -82,7 +82,7 @@ supervisorctl reread
 supervisorctl update
 
 # ensure that the current static files are sent to the bucket to serve them.
-gsutil -m cp -R static gs://cccb-apps-static-resources-dev/
+python /startup/copy_static_assets.py
 
 # Start Gunicorn processes
 mkdir -p /var/log/gunicorn
