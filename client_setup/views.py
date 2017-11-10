@@ -20,6 +20,7 @@ import os
 import sys
 sys.path.append(os.path.abspath('..'))
 import email_utils
+import cccb_portal.tagging as tagging
 
 MESSAGE_TEMPLATE = """<html><body><p>An analysis project for iLab ID %s has been created for your email (%s).  
 			You may now begin to upload files and perform analysis</p><p><a href="%s" target="_blank">Go to CCCB Applications.</a></p>
@@ -101,7 +102,10 @@ def setup_client(request):
 				msg = MESSAGE_TEMPLATE % (project.ilab_id, email, settings.HOST ,later.strftime('%B %d, %Y'))
 				email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), msg, [email, settings.CCCB_GROUP_EMAIL], '[CCCB] Analysis project created')
 
-				# TODO send email
+				# tag the bucket:
+				tag_info = {'ilab_id':project.ilab_id, 'service_type':svc.name}
+				tagging.tag_bucket(bucket_name, tag_info)
+
 				if previously_existed:
 					print 'You were already a user and we added another project.  go sign in.'
 					success_message = 'Successfully added %s service for existing user %s %s (%s)' % (svc.name, first_name, last_name, email)

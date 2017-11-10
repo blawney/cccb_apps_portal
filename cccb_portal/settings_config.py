@@ -255,6 +255,12 @@ GMAIL_CREDENTIALS = os.path.join(CREDENTIAL_DIR, gmail_cred_file)
 EMAIL_UTILS = 'email_utils.py'
 CCCB_GROUP_EMAIL = config_parser.get(environment, 'cccb_group_email')
 
-GCLOUD_PATH = '/root/gcloud/google-cloud-sdk/bin/gcloud'
+GCLOUD_PATH = os.getenv('GCLOUD')
+if GCLOUD_PATH is None:
+	GCLOUD_PATH = '/root/gcloud/google-cloud-sdk/bin/gcloud'
+
+GSUTIL_PATH = os.getenv('GSUTIL')
+if GSUTIL_PATH is None:
+	GSUTIL_PATH = '/root/gcloud/google-cloud-sdk/bin/gsutil'
 
 RETENTION_DAYS = 30 # integer, number of days

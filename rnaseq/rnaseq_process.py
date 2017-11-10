@@ -121,6 +121,7 @@ def launch_workers(compute, project, result_bucket_name, sample_mapping, config_
         kwargs['genome_config_path'] = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['genome_config_file'])
         kwargs['align_script_template'] = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['align_script_template'])
         kwargs['project_pk'] = project.pk
+        kwargs['ilab_id'] = project.ilab_id
         kwargs['sample_pk'] = sample_tuple[0]
         kwargs['callback_url'] = '%s/%s' % (settings.HOST, CALLBACK_URL)
         kwargs['startup_script'] = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['startup_script'])
@@ -156,6 +157,11 @@ def launch_custom_instance(compute, google_project, zone, instance_name, kwargs,
         'name': instance_name,
         'machineType': machine_type,
 
+        'labels':[{
+                    'key':'ilab_id',
+                    'value':kwargs['ilab_id']
+                   }
+                 ],
         # Specify the boot disk and the image to use as a source.
         'disks': [
             {
