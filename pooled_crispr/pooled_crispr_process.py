@@ -122,6 +122,11 @@ def launch(project_pk, config_params):
         'name': instance_name,
         'machineType': machine_type,
 
+        'labels':[{
+                    'key':'ilab_id',
+                    'value':project.ilab_id
+                   }
+                 ],
         # Specify the boot disk and the image to use as a source.
         'disks': [
             {
