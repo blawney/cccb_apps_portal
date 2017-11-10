@@ -12,6 +12,12 @@ if [ $1 == "dev" ]; then
 else
   echo "Setting up production environment"
   export GOOGLE_PROJECT=cccb-data-delivery
+  if [ -z $4 ]; then
+    echo "No port was specified for production."
+  else
+    export PORT=$4
+    export DEVPORT=$PORT
+  fi
 fi
 
 
@@ -84,6 +90,8 @@ supervisorctl update
 # ensure that the current static files are sent to the bucket to serve them.
 python /startup/copy_static_assets.py
 
+python cccb_apps/create_superuser.py
+
 # Start Gunicorn processes
 mkdir -p /var/log/gunicorn
 export APP_STATUS=$1
@@ -102,10 +110,10 @@ else
   export GOOGLE_PROJECT=cccb-data-delivery
   LOG="/var/log/gunicorn/gunicorn.log"
   touch $LOG
-  SOCKET_PATH="unix:/host_tmp/gunicorn.sock"
+  SOCKET_PATH="unix:/host_tmp/gunicorn"$PORT".sock"
   exec gunicorn cccb_portal.wsgi:application \
 	--bind $SOCKET_PATH \
-	--workers 1 \
+	--workers 3 \
 	--error-logfile $LOG \
 	--log-file $LOG
 fi

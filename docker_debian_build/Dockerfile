@@ -53,6 +53,7 @@ RUN curl -sSL https://sdk.cloud.google.com > /tmp/gcl \
 ARG gcloud_bin=/root/gcloud/google-cloud-sdk/bin
 ENV PATH "$PATH:"${gcloud_bin}
 ENV GCLOUD=${gcloud_bin}/gcloud
+ENV GSUTIL=${gcloud_bin}/gsutil
 
 # celery/redis related items
 RUN curl -o /tmp/redis-stable.tar.gz http://download.redis.io/redis-stable.tar.gz \
@@ -104,9 +105,6 @@ RUN Rscript /startup/install_R_packages.R \
   && R CMD INSTALL r_packages/cccbDGEpipeline_0.1.0.tar.gz
 
 ENV APP_ROOT=${appdir}
-
-# expose port
-EXPOSE 8080
 
 # run the startup script which injects some parameters and starts the app server:
 ENTRYPOINT ["/startup/startup.sh"]
