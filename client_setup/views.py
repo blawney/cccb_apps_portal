@@ -56,7 +56,8 @@ def setup_client(request):
 					service = request.POST.get('service_select')
 					svc = service_dict[service]
 
-					ilab_id = request.POST.get('ilab_id')
+					ilab_id_raw = request.POST.get('ilab_id')
+					ilab_id = ilab_id_raw.strip().lower()
 
 					
 					max_samples = int(request.POST.get('max_samples'))
@@ -103,7 +104,7 @@ def setup_client(request):
 				email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), msg, [email, settings.CCCB_GROUP_EMAIL], '[CCCB] Analysis project created')
 
 				# tag the bucket:
-				tag_info = {'ilab_id':project.ilab_id, 'service_type':svc.name}
+				tag_info = {'ilab_id':project.ilab_id.lower(), 'service_type':svc.name.lower()}
 				tagging.tag_bucket(bucket_name, tag_info)
 
 				if previously_existed:
