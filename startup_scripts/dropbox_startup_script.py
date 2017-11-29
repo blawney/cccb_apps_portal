@@ -134,37 +134,39 @@ def send_to_dropbox(params):
 		commit=dropbox.files.CommitInfo(path=path_in_dropbox)
 		while stream.tell() < file_size:
 			logging.info('Sending chunk %s' % i)
-			if (file_size-stream.tell()) <= DEFAULT_CHUNK_SIZE:
-				logging.info('Finishing transfer and committing')
-				client.files_upload_session_finish(stream.read(DEFAULT_CHUNK_SIZE), cursor, commit)
-			else:
-				logging.info('About to send chunk')
-				try:
+			try:
+				if (file_size-stream.tell()) <= DEFAULT_CHUNK_SIZE:
+					logging.info('Finishing transfer and committing')
+					client.files_upload_session_finish(stream.read(DEFAULT_CHUNK_SIZE), cursor, commit)
+				else:
+					logging.info('About to send chunk')
 					logging.info('Prior to chunk transfer, cursor=%d, stream=%d' % (cursor.offset, stream.tell()))
 					client.files_upload_session_append_v2(stream.read(DEFAULT_CHUNK_SIZE), cursor)
 					cursor.offset = stream.tell()
 					logging.info('Done with sending chunk')
-				except dropbox.exceptions.ApiError as ex:
-					if ex.error.is_incorrect_offset():
-						correct_offset = ex.error.get_incorrect_offset().correct_offset
-						cursor.offset = correct_offset
-						stream.seek(correct_offset)
-					else:
-						logging.error('API error was raised, but was not offset error')
-						raise ex
-				except requests.exceptions.ConnectionError as ex:
-					logging.error('Caught a ConnectionError exception')
-					# need to rewind the stream
-					logging.info('At this point, cursor=%d, stream=%d' % (cursor.offset, stream.tell()))
-					cursor_offset = cursor.offset
-					stream.seek(cursor_offset)
-					logging.info('After rewind, cursor=%d, stream=%d' % (cursor.offset, stream.tell()))
-					notify_cccb_of_error(params, msg="<html><body>Caught a ConnectionError.  Check instance %s</body></html>" % get_instance_name())
-					logging.info('Go try that chunk again')
-				except requests.exceptions.RequestException as ex:
-					logging.error('Caught an exception during chunk transfer')
-					logging.info('Following FAILED chunk transfer, cursor=%d, stream=%d' % (cursor.offset, stream.tell()))
+			except dropbox.exceptions.ApiError as ex:
+				logging.error('Raised ApiError!')
+				if ex.error.is_incorrect_offset():
+					logging.error('The error raised was an offset error.  Correcting the cursor and stream offset')
+					correct_offset = ex.error.get_incorrect_offset().correct_offset
+					cursor.offset = correct_offset
+					stream.seek(correct_offset)
+				else:
+					logging.error('API error was raised, but was not offset error')
 					raise ex
+			except requests.exceptions.ConnectionError as ex:
+				logging.error('Caught a ConnectionError exception')
+				# need to rewind the stream
+				logging.info('At this point, cursor=%d, stream=%d' % (cursor.offset, stream.tell()))
+				cursor_offset = cursor.offset
+				stream.seek(cursor_offset)
+				logging.info('After rewind, cursor=%d, stream=%d' % (cursor.offset, stream.tell()))
+				notify_cccb_of_error(params, msg="<html><body>Caught a ConnectionError.  Check instance %s</body></html>" % get_instance_name())
+				logging.info('Go try that chunk again')
+			except requests.exceptions.RequestException as ex:
+				logging.error('Caught an exception during chunk transfer')
+				logging.info('Following FAILED chunk transfer, cursor=%d, stream=%d' % (cursor.offset, stream.tell()))
+				raise ex
 			i += 1
 	stream.close()
 
@@ -201,6 +203,7 @@ if __name__ == '__main__':
 		notify_master(params)
 		kill_instance(params)
 	except Exception as ex:
+		logging.error('Caught some unexpected exception.')
 		logging.error(str(type(ex)))
 		logging.error(ex)
 		notify_cccb_of_error(params)
