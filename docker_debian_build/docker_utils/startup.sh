@@ -104,7 +104,8 @@ if [ $1 == "dev" ]; then
 	--bind $SOCKET_PATH \
 	--workers 1 \
 	--error-logfile $LOG \
-	--log-file $LOG
+	--log-file $LOG \
+	--capture-output
 else
   echo "Setting up production environment"
   export GOOGLE_PROJECT=cccb-data-delivery
@@ -115,5 +116,6 @@ else
 	--bind $SOCKET_PATH \
 	--workers 3 \
 	--error-logfile $LOG \
-	--log-file $LOG
+	--log-file $LOG \
+	--capture-output
 fi
