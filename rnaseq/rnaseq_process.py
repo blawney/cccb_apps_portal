@@ -67,8 +67,12 @@ def setup(project_pk, config_params):
     for s in all_samples:
         sample_mapping[(s.pk, s.name)] = []
     for ds in datasources:
-        if ds.sample in all_samples:
-            sample_mapping[(ds.sample.pk, ds.sample.name)].append(ds)
+        try:
+            ds = ds.sampledatasource
+            if ds.sample in all_samples:
+                sample_mapping[(ds.sample.pk, ds.sample.name)].append(ds)
+        except ObjectDoesNotExist as ex:
+            pass 
 
     # just in case, remove any empty samples:
     final_mapping = {}
@@ -282,6 +286,7 @@ def launch_custom_instance(compute, google_project, zone, instance_name, kwargs,
 def start_analysis(project_pk):
     config_params = config_parser.parse_config()
     project, result_bucket_name, sample_mapping = setup(project_pk, config_params)
+    print 'done with setup'
     compute = googleapiclient.discovery.build('compute', 'v1')
     launch_workers(compute, project, result_bucket_name, sample_mapping, config_params)
 
