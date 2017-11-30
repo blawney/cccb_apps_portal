@@ -160,7 +160,7 @@ def perform_dge(request, project_pk):
 			r_script_cmd = 'Rscript %s %s %s %s %s %s %s %s' % (DESEQ_SCRIPT, local_dir, os.path.basename(local_cm_path), os.path.basename(annotation_file), result_filepath, norm_counts_filepath, l2fc_threshold, pval_threshold)
 
 			print r_script_cmd
-			tasks.deseq_call.delay(r_script_cmd, local_dir, cloud_dge_dir, os.path.basename(local_cm_path), os.path.basename(annotation_file), contrast_name, bucket_name, project_pk)
+			tasks.deseq_call.delay(r_script_cmd, local_dir, cloud_dge_dir, os.path.basename(local_cm_path), os.path.basename(annotation_file), norm_counts_filepath, contrast_name, bucket_name, project_pk)
 			#output_files.append(result_filepath)
 
 		project.status_message = 'Performing differential expression analysis'

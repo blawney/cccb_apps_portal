@@ -20,7 +20,7 @@ import pandas as pd
 LINK_ROOT = settings.PUBLIC_STORAGE_ROOT + '%s/%s'
 
 @task(name='deseq_call')
-def deseq_call(deseq_cmd, results_dir, cloud_dge_dir, count_matrix_filename, annotation_filename, contrast_name, bucket_name, project_pk):
+def deseq_call(deseq_cmd, results_dir, cloud_dge_dir, count_matrix_filename, annotation_filename, norm_counts_filename, contrast_name, bucket_name, project_pk):
 	p = subprocess.Popen(deseq_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 	stdout, stderr = p.communicate()
 	if p.returncode != 0:
@@ -39,10 +39,11 @@ def deseq_call(deseq_cmd, results_dir, cloud_dge_dir, count_matrix_filename, ann
 
 		project_owner = project.owner.email
 
-		# make a cls file for GSEA:
-		raw_count_matrix_filepath = os.path.join(results_dir, count_matrix_filename)
-		df = pd.read_table(raw_count_matrix_filepath)
-		samples = df.columns.tolist()[1:] # Gene is first column
+
+		# create cls and gct files for GSEA:
+		norm_counts_filepath = os.path.join(results_dir, norm_counts_filename)
+		nc_matrix = pd.read_table(norm_counts_filepath, index_col=0)
+		samples = nc_matrix.columns.tolist() # Gene is in the index
 
 		# annotation file has two columns, first is sample name second is group
 		annotations = pd.read_table(os.path.join(results_dir, annotation_filename), index_col=0)
@@ -53,6 +54,17 @@ def deseq_call(deseq_cmd, results_dir, cloud_dge_dir, count_matrix_filename, ann
 			cls_outfile.write('%d\t%d\t1\n' % (group_list.shape[0], len(unique_groups)))
 			cls_outfile.write('#\t%s\t%s\n' % (unique_groups[0], unique_groups[1]))
 			cls_outfile.write(group_list_str + '\n')
+
+		nc_matrix['NAME'] = nc_matrix.index.values
+		nc_matrix['Description'] = nc_matrix.index.values
+		col_order = ['NAME', 'Description'] + samples
+
+		gct_filepath = norm_counts_filepath[:-3] + 'gct'
+		with open(gct_filepath, 'w') as gct_out:
+			intro_lines = '#1.2\n'
+			intro_lines += str(nc_matrix.shape[0]) + '\t' + str(nc_matrix.shape[1]-2) + '\n'
+			gct_out.write(intro_lines)
+			nc_matrix[col_order].to_csv(gct_out, sep='\t', index = False)
 
 		# make some plots
 		for f in glob.glob(os.path.join(results_dir, '*deseq.tsv')):
