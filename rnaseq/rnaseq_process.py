@@ -125,7 +125,7 @@ def launch_workers(compute, project, result_bucket_name, sample_mapping, config_
         kwargs['genome_config_path'] = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['genome_config_file'])
         kwargs['align_script_template'] = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['align_script_template'])
         kwargs['project_pk'] = project.pk
-        kwargs['ilab_id'] = project.ilab_id
+        kwargs['ilab_id'] = project.ilab_id.lower()
         kwargs['sample_pk'] = sample_tuple[0]
         kwargs['callback_url'] = '%s/%s' % (settings.HOST, CALLBACK_URL)
         kwargs['startup_script'] = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['startup_script'])
