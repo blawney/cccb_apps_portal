@@ -64,7 +64,7 @@ def deseq_call(deseq_cmd, results_dir, cloud_dge_dir, count_matrix_filename, ann
 			intro_lines = '#1.2\n'
 			intro_lines += str(nc_matrix.shape[0]) + '\t' + str(nc_matrix.shape[1]-2) + '\n'
 			gct_out.write(intro_lines)
-			nc_matrix[col_order].to_csv(gct_out, sep='\t', index = False)
+			nc_matrix[col_order].to_csv(gct_out, sep=b'\t', index = False)
 
 		# make some plots
 		for f in glob.glob(os.path.join(results_dir, '*deseq.tsv')):
