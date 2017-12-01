@@ -100,7 +100,7 @@ def volcano_plot(dge_df, output_figure_path, l2fc_threshold=1, padj_threshold=0.
 	sns.set(font='serif', font_scale=1.5)
 	fig, ax = plt.subplots(figsize=(10,12))
 
-	log10_vals = -np.log10(df['padj'])
+	log10_vals = -np.log10(dge_df['padj'])
 	first_noninf_index = log10_vals.ix[log10_vals != np.infty].index[0]
 	dge_df = dge_df.ix[first_noninf_index:]
 	max_y = -np.log10(dge_df['padj'].min())
