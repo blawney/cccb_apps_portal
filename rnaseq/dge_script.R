@@ -20,7 +20,7 @@ setwd(OUTPUTDIR)
 count_data=read.table(RAW_COUNT_MATRIX, header=T, sep="\t")
 rownames(count_data)=count_data$Gene
 count_data=count_data[-1]
-annotations=read.table(SAMPLE_ANNOTATION_FILE, header=T, sep="\t")
+annotations=read.table(SAMPLE_ANNOTATION_FILE, header=T, sep="\t", stringsAsFactors=F)
 threshold=list(pvalue=PVAL_THRESHOLD, log2fc=LOG2FC_THRESHOLD)
 # END INPUTS
 
