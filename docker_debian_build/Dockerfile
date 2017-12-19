@@ -9,6 +9,7 @@ RUN apt-get update \
     python-cryptography \
     curl \
     wget \
+    nano \
     gfortran \
     openssl \
     libffi-dev \
