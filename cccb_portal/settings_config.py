@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'variant_calling_from_bam',
     'google_drive',
     'pooled_crispr',
+    'circ_rna',
 ]
 
 MIDDLEWARE = [
