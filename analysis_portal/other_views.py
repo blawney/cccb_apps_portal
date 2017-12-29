@@ -12,6 +12,7 @@ import os
 sys.path.append(os.path.abspath('..'))
 from rnaseq import rnaseq_process
 from pooled_crispr import pooled_crispr_process
+from circ_rna import circ_rna_process
 
 from Crypto.Cipher import DES
 import base64
@@ -74,11 +75,15 @@ def notify(request):
                     print 'found rnaseq project'
                     rnaseq_process.handle(project, request)
                     print 'done handling'
-                    return HttpResponse('thanks')
+                    return HttpResponse('RNA-Seq request received')
                 elif project.service.name == 'pooled_crispr':
                     print 'got response from pooled crispr'
                     pooled_crispr_process.handle(project, request)
-                    return HttpResponse('thanks')
+                    return HttpResponse('Pooled CRISPR request received')
+                elif project.service.name == 'circ_rna':
+                    print 'got response from circ_rna worker'
+                    circ_rna_process.handle(project, request)
+                    return HttpResponse('circRNA request received.')
                 else:
                     return HttpResponseBadRequest('')
             except Exception as ex:

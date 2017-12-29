@@ -17,12 +17,16 @@ sys.path.append(os.path.abspath('..'))
 import email_utils
 from client_setup.models import Project, Sample
 from download.models import Resource
+from cccb_portal.config_parser import parse_config as config_parser
 
 from django.conf import settings
 from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist
 
-import config_parser
+
+@task(name='finish_circ_rna_process')
+def finish_circ_rna_process(project_pk):
+	print 'Do some wrap-up of circRNA pipeline'
 
 
 @task(name='launch_circ_rna_worker')
@@ -103,16 +107,8 @@ def launch_circ_rna_worker(param_dict):
                 'value': param_dict['callback_url']
             },
             {
-              'key':'email_utils',
-              'value': param_dict['email_utils']
-            },
-            {
-              'key':'email_credentials',
-              'value': param_dict['email_credentials']
-            },
-            {
-              'key':'notification_email_addresses',
-              'value': param_dict['notification_email_addresses']
+              'key':'scripts-directory',
+              'value': param_dict['scripts_bucket']
             },
             {
               'key':'token',
@@ -138,7 +134,26 @@ def launch_circ_rna_worker(param_dict):
 				'key': 'r2_fastq',
 				'value': param_dict['r2_fastq']
 			},
-
+			{
+				'key': 'docker_image',
+				'value': param_dict['docker_image]
+			},
+			{
+				'key': 'service_account_credentials',
+				'value': param_dict['service_account_credentials']
+			},
+			{
+				'key': 'dataset_name',
+				'value': param_dict['dataset_name']
+			},
+			{
+				'key':'read_length_script',
+				'value': param_dict['read_length_script']
+			},
+			{
+				'key':'read_samples',
+				'value': param_dict['read_samples']
+			},
           ]
         }
     }

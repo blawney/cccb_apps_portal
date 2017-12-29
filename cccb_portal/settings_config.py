@@ -184,7 +184,8 @@ UPLOAD_PREFIX = 'uploads'
 CREDENTIAL_DIR = os.path.join(BASE_DIR, 'credentials')
 
 # json file with service account credentials
-svc_acct_filename = os.path.basename(config_parser.get(environment, 'service_account_credentials_json'))
+SERVICE_ACCOUNT_CREDENTIALS_CLOUD = config_parser.get(environment, 'service_account_credentials_json')
+svc_acct_filename = os.path.basename(SERVICE_ACCOUNT_CREDENTIALS_CLOUD)
 SERVICE_ACCOUNT_CREDENTIALS = os.path.join(CREDENTIAL_DIR, svc_acct_filename)
 
 # some settings related to authenticating with google (Oauth2 credentials):

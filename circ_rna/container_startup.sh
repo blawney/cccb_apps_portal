@@ -27,7 +27,17 @@ $GCLOUD auth activate-service-account --key-file=$CRED_FILE_PATH
 SERVICE_ACCOUNT=$(python /srv/software/get_account_name.py $CRED_FILE_PATH)
 export BOTO_PATH=/root/.config/gcloud/legacy_credentials/$SERVICE_ACCOUNT/.boto
 
+# a script that will look at the fastq and determine the read length
+read_length_script_path=$6
+gsutil cp $read_length_script_path /srv/software/
+read_length_script_path=$(basename $read_length_script_path)
+
+# how many reads to sample to detetermine approximate read length
+read_samples=$7
+
 # shift the pointer; the remainder of the args get passed directly to the knife shell script.
+shift
+shift
 shift
 shift
 shift
@@ -42,6 +52,10 @@ if [ "$fq2_path" != "-" ]
   then
     gsutil cp $fq2_path $fastq_dir/
 fi
+
+local_fq1=$fastq_dir"/"$(basname $fq1_path)
+
+OVERLAP=$(python /srv/software/$read_length_script_path $local_fq1 $fq2_path $read_samples)
 
 # create the necessary index directories and pull the index
 # for the particular gene from a bucket:
@@ -78,7 +92,7 @@ cd /srv/software/knife/circularRNApipeline_Standalone
 # so this directory is $3
 
 mkdir -p $3
-sh completeRun.sh "$@" 2>&1 | tee out.log
+sh completeRun.sh $1 $2 $3 $4 $OVERLAP 2>&1 | tee $3/out.log
 
 # Once that is complete, move the files back to a result bucket
 gsutil cp -R $3 $output_bucket

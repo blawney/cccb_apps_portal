@@ -15,6 +15,7 @@ import pandas as pd
 
 sys.path.append(os.path.abspath('..'))
 import email_utils
+from cccb_portal.config_parser import parse_config as config_parser
 from client_setup.models import Project, Sample
 from download.models import Resource
 
@@ -30,16 +31,27 @@ CALLBACK_URL = 'analysis/notify/'
 
 def handle(project, request):
 
-    tasks.finalize.delay(project.pk)
+	sample_pk = int(request.POST.get('samplePK', ''))
+	sample = Sample.objects.get(pk = sample_pk)
+	has_error = bool(request.POST.get('has_error', ''))
+	if has_error:
+		# notify CCCB
+	else:
+		sample.processed = True
+		sample.save()
 
-    project.in_progress = False
-    project.paused_for_user_input = False
-    project.completed = True
-    project.status_message = 'Completed quantification'
-    project.next_action_text = '-'
-    project.next_action_url = ''
-    project.has_downloads = True
-    project.save()
+	# now check to see if everyone is done
+	all_samples = project.sample_set.all()
+	if all([s.processed for s in all_samples]):
+		project.in_progress = False
+		project.paused_for_user_input = False
+		project.completed = True
+		project.status_message = 'Complete'
+		project.next_action_text = '-'
+		project.next_action_url = ''
+		project.has_downloads = True
+		project.save()
+		tasks.finish_circ_rna_process.delay(project.pk)
 
 
 def prepare(project_pk, config_params):
@@ -99,18 +111,21 @@ def prepare(project_pk, config_params):
     # args that each spawned VM will need:
     base_kwargs = {}
     base_kwargs['reference_genome'] = reference_genome
-    base_kwargs['email_utils'] = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['email_utils'])
-    base_kwargs['email_credentials'] = settings.GMAIL_CREDENTIALS_CLOUD
+    base_kwargs['scripts_bucket'] = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['scripts_dir'])
     base_kwargs['token'] = settings.TOKEN
     base_kwargs['enc_key'] = settings.ENCRYPTION_KEY
     base_kwargs['cccb_project_pk'] = project.pk
     base_kwargs['ilab_id'] = project.ilab_id.lower()
     base_kwargs['callback_url'] = '%s/%s' % (settings.HOST, CALLBACK_URL)
     base_kwargs['startup_script_url'] = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['startup_script'])
-    base_kwargs['notification_email_addresses'] = settings.CCCB_EMAIL_CSV
     base_kwargs['machine_type'] = config_params['machine_type']
     base_kwargs['disk_size'] = config_params['disk_size']
     base_kwargs['image_name'] = config_params['image_name']
+    base_kwargs['docker_image'] = config_params['docker_image']
+    base_kwargs['service_account_credentials'] = settings.SERVICE_ACCOUNT_CREDENTIALS_CLOUD
+	base_kwargs['dataset_name'] = re.sub('[\s-]+', '_', project.name)
+	base_kwargs['read_length_script'] = os.path.join(base_kwargs['scripts_bucket'], config_params['read_length_script'])
+	base_kwargs['read_samples'] = config_params['read_samples']
 
     for sample_tuple, ds_list in final_mapping.items():
         file_list = sorted([settings.GOOGLE_BUCKET_PREFIX + os.path.join(bucket_name, ds.filepath) for ds in ds_list])
@@ -127,5 +142,6 @@ def prepare(project_pk, config_params):
 
 
 def start_analysis(project_pk):
-    config_params = config_parser.parse_config()
+    config_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'config.cfg')
+    config_params = config_parser.parse_config(config_file)
     prepare(project_pk, config_params)
