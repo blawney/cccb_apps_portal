@@ -41,7 +41,7 @@ READ_SAMPLES=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata
 
 # pull credentials which are needed in the docker container
 CREDENTIAL_JSON_CLOUD=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/attributes/service_account_credentials)
-CREDENTIAL_JSON_BASENAME=$(basname $CREDENTIAL_JSON_CLOUD)
+CREDENTIAL_JSON_BASENAME=$(basename $CREDENTIAL_JSON_CLOUD)
 CREDENTIAL_DIR="/credentials"
 mkdir $CREDENTIAL_DIR
 gsutil cp $CREDENTIAL_JSON_CLOUD $CREDENTIAL_DIR

@@ -268,7 +268,7 @@ workflow_step.step_url = 'file_annotation'
 workflow_step.save()
 
 workflow_step = Workflow.objects.get_or_create(step_order=4, service=svc)[0]
-workflow_step.step_url = 'circ_rna_summary'
+workflow_step.step_url = 'pre_analysis_summary'
 workflow_step.save()
 
 ###################################### End circRNA ##############################################################

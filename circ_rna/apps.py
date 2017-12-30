@@ -4,5 +4,5 @@ from __future__ import unicode_literals
 from django.apps import AppConfig
 
 
-class CircRNAConfig(AppConfig):
+class CircRnaConfig(AppConfig):
     name = 'circ_rna'

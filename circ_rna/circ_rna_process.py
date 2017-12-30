@@ -23,8 +23,6 @@ from django.conf import settings
 from django.urls import reverse
 from django.core.exceptions import ObjectDoesNotExist
 
-import config_parser
-
 from . import tasks
 
 CALLBACK_URL = 'analysis/notify/'
@@ -36,6 +34,9 @@ def handle(project, request):
 	has_error = bool(request.POST.get('has_error', ''))
 	if has_error:
 		# notify CCCB
+		print 'Error with circRNA worker'
+		email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), \
+				"There was a problem with the circRNA worker for sample %s" % sample.name, settings.CCCB_EMAIL_CSV, '[CCCB] Problem with circRNA worker')
 	else:
 		sample.processed = True
 		sample.save()
@@ -117,15 +118,15 @@ def prepare(project_pk, config_params):
     base_kwargs['cccb_project_pk'] = project.pk
     base_kwargs['ilab_id'] = project.ilab_id.lower()
     base_kwargs['callback_url'] = '%s/%s' % (settings.HOST, CALLBACK_URL)
-    base_kwargs['startup_script_url'] = settings.GOOGLE_BUCKET_PREFIX + os.path.join(settings.STARTUP_SCRIPT_BUCKET, config_params['startup_script'])
+    base_kwargs['startup_script_url'] = os.path.join(base_kwargs['scripts_bucket'], config_params['startup_script'])
     base_kwargs['machine_type'] = config_params['machine_type']
     base_kwargs['disk_size'] = config_params['disk_size']
     base_kwargs['image_name'] = config_params['image_name']
     base_kwargs['docker_image'] = config_params['docker_image']
     base_kwargs['service_account_credentials'] = settings.SERVICE_ACCOUNT_CREDENTIALS_CLOUD
-	base_kwargs['dataset_name'] = re.sub('[\s-]+', '_', project.name)
-	base_kwargs['read_length_script'] = os.path.join(base_kwargs['scripts_bucket'], config_params['read_length_script'])
-	base_kwargs['read_samples'] = config_params['read_samples']
+    base_kwargs['dataset_name'] = re.sub('[\s-]+', '_', project.name)
+    base_kwargs['read_length_script'] = os.path.join(base_kwargs['scripts_bucket'], config_params['read_length_script'])
+    base_kwargs['read_samples'] = config_params['read_samples']
 
     for sample_tuple, ds_list in final_mapping.items():
         file_list = sorted([settings.GOOGLE_BUCKET_PREFIX + os.path.join(bucket_name, ds.filepath) for ds in ds_list])
@@ -136,12 +137,12 @@ def prepare(project_pk, config_params):
         kwargs['r2_fastq'] = '-'
         # if paired
         if len(file_list) == 2:
-            kwargs['r2_fastq'] = file_list[1]
+            kwargs['r2_fastq'] = file_list[1]		
 		
-		tasks.launch_circ_rna_worker.delay(kwargs)
+        tasks.launch_circ_rna_worker.delay(kwargs)
 
 
 def start_analysis(project_pk):
     config_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'config.cfg')
-    config_params = config_parser.parse_config(config_file)
+    config_params = config_parser(config_file)
     prepare(project_pk, config_params)

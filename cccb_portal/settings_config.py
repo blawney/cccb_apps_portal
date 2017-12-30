@@ -169,6 +169,11 @@ SITE_ID = 1
 
 # the base of our address:
 development_port = os.getenv('DEVPORT')
+try:
+	development_port = int(development_port)
+except ValueError:
+	development_port = None
+
 if development_port is None:
 	HOST = '%s://%s' % (config_parser.get(environment, 'protocol'), config_parser.get(environment, 'domain'))
 else:

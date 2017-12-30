@@ -1,28 +1,18 @@
-from google.cloud import storage
 import googleapiclient.discovery
 import os
-import shutil
-import glob
-import json
-import urllib
-import urllib2
 import sys
 import datetime
-import re
-import subprocess
 
 import pandas as pd
 
 sys.path.append(os.path.abspath('..'))
 import email_utils
 from client_setup.models import Project, Sample
-from download.models import Resource
 from cccb_portal.config_parser import parse_config as config_parser
 
 from django.conf import settings
-from django.urls import reverse
-from django.core.exceptions import ObjectDoesNotExist
 
+from celery.decorators import task
 
 @task(name='finish_circ_rna_process')
 def finish_circ_rna_process(project_pk):
@@ -136,7 +126,7 @@ def launch_circ_rna_worker(param_dict):
 			},
 			{
 				'key': 'docker_image',
-				'value': param_dict['docker_image]
+				'value': param_dict['docker_image']
 			},
 			{
 				'key': 'service_account_credentials',
