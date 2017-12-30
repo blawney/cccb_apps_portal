@@ -35,6 +35,14 @@ read_length_script_path=$(basename $read_length_script_path)
 # how many reads to sample to detetermine approximate read length
 read_samples=$7
 
+echo "Args were:"
+echo "genome: "$genome
+echo "fq1: "$fq1_path
+echo "fq2: "$fq2_path
+echo "output_bucket: "$output_bucket
+echo "cred file: "$CRED_FILE_PATH
+echo "read length script: "$read_length_script_path
+echo "read_samples: "$read_samples
 # shift the pointer; the remainder of the args get passed directly to the knife shell script.
 shift
 shift
@@ -43,6 +51,11 @@ shift
 shift
 shift
 shift
+
+
+echo "Remaining args after shift:"
+echo $@
+echo "********"
 
 # create a directory for the fastq, change there, and pull the files from a bucket:
 fastq_dir=$1
