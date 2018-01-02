@@ -58,8 +58,8 @@ docker pull $DOCKER_IMAGE && \
 		$R2_FASTQ \
 		$RESULT_BUCKET \
 		/creds/$CREDENTIAL_JSON_BASENAME \
-		READ_LENGTH_SCRIPT \
-		READ_SAMPLES \
+		$READ_LENGTH_SCRIPT \
+		$READ_SAMPLES \
 		/fastq_files \
 		complete \
 		/knife_output \

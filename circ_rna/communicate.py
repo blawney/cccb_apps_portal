@@ -47,19 +47,19 @@ def notify_master(params, error):
     d['token'] = b64_str
     d['projectPK'] = params['project_pk']
     d['samplePK'] = params['sample_pk']
-	d['has_error'] =  int(error)
+    d['has_error'] =  int(error)
     base_url = params['callback_url']
     data = urllib.urlencode(d)
     request = urllib2.Request(base_url, {'Content-Type': 'application/json'})
     response = urllib2.urlopen(request, data=data)
 
 if __name__ == '__main__':
-	error = False
-	if len(sys.argv) > 1:
-		error = True
+    error = False
+    if len(sys.argv) > 1:
+        error = True
     EXPECTED_PARAMS = ['token','enc_key','callback_url', 'google_project', 'google_zone', 'project_pk', 'sample_pk']
     params = dict(zip(EXPECTED_PARAMS, map(get_metadata_param, EXPECTED_PARAMS)))
     notify_master(params, error)
-	if not error:
-	    kill_instance(params)
+    if not error:
+        kill_instance(params)
 
