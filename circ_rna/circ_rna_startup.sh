@@ -38,6 +38,7 @@ RESULT_BUCKET=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadat
 DATASET_NAME=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/attributes/dataset_name)
 READ_LENGTH_SCRIPT=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/attributes/read_length_script)
 READ_SAMPLES=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/attributes/read_samples)
+KNIFE_RESOURCE_BUCKET=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/attributes/knife_resource_bucket)
 
 # pull credentials which are needed in the docker container
 CREDENTIAL_JSON_CLOUD=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/attributes/service_account_credentials)
@@ -60,6 +61,7 @@ docker pull $DOCKER_IMAGE && \
 		/creds/$CREDENTIAL_JSON_BASENAME \
 		$READ_LENGTH_SCRIPT \
 		$READ_SAMPLES \
+		$KNIFE_RESOURCE_BUCKET
 		/fastq_files \
 		complete \
 		/knife_output \

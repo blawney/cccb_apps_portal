@@ -9,6 +9,33 @@ import re
 class UndeterminedFiletypeException(Exception):
 	pass
 
+
+def get_paired_or_single_status(project_pk):
+	"""
+	Given project primary key (int), check if all samples are 
+	paired or single-end protocol.  Return True if paired, False is single
+	"""
+	datasources = project.datasource_set.all()
+	all_samples = project.sample_set.all()
+	
+	sample_mapping = {}
+	for s in all_samples:
+		sample_mapping[(s.pk, s.name)] = []
+
+	for ds in datasources:
+		try:
+			ds = ds.sampledatasource
+			if ds.sample in all_samples:
+				sample_mapping[(ds.sample.pk, ds.sample.name)].append(ds)
+		except ObjectDoesNotExist as ex:
+			pass 
+	# just in case, remove any empty samples:
+	final_mapping = {}
+	for key, vals in sample_mapping.items():
+		if len(vals) > 0:
+			final_mapping[key] = vals
+	return all([len(x)==2 for x in final_mapping.values()])
+
 def check_ownership(project_pk, user):
 	"""
 	Checks the ownership of a requested project (addressed by its db primary key)

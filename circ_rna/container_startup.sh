@@ -35,6 +35,7 @@ read_length_script_path=$(basename $read_length_script_path)
 # how many reads to sample to detetermine approximate read length
 read_samples=$7
 
+knife_resource_bucket=$8
 echo "Args were:"
 echo "genome: "$genome
 echo "fq1: "$fq1_path
@@ -43,7 +44,9 @@ echo "output_bucket: "$output_bucket
 echo "cred file: "$CRED_FILE_PATH
 echo "read length script: "$read_length_script_path
 echo "read_samples: "$read_samples
+echo "Bucket containing knife resources: "$knife_resource_bucket
 # shift the pointer; the remainder of the args get passed directly to the knife shell script.
+shift
 shift
 shift
 shift
@@ -76,16 +79,16 @@ cd /srv/software/knife/circularRNApipeline_Standalone && \
 mkdir index && \
 cd index
 
-gsutil cp gs://cccb-knife-resources/$genome/$genome_*bt2 .
-gsutil cp gs://cccb-knife-resources/$genome/$genome_*bt2l .
-gsutil cp gs://cccb-knife-resources/$genome/$genome_*fa .
+gsutil cp $knife_resource_buckets/$genome/$genome_*bt2 .
+gsutil cp $knife_resource_bucket/$genome/$genome_*bt2l .
+gsutil cp $knife_resource_bucket/$genome/$genome_*fa .
 
 cd /srv/software/knife/circularRNApipeline_Standalone/denovo_scripts && \
 mkdir index && \
 cd index
 
-gsutil cp gs://cccb-knife-resources/$genome/$genome_*ebwt .
-gsutil cp gs://cccb-knife-resources/$genome/$genome_*gtf .
+gsutil cp $knife_resource_bucket/$genome/$genome_*ebwt .
+gsutil cp $knife_resource_bucket/$genome/$genome_*gtf .
 
 
 # now change to the main script directory and run:
@@ -108,4 +111,4 @@ mkdir -p $3
 sh completeRun.sh $1 $2 $3 $4 $OVERLAP 2>&1 | tee $3/out.log
 
 # Once that is complete, move the files back to a result bucket
-gsutil cp -R $3 $output_bucket
+gsutil cp -R $3/$4/circReads $output_bucket

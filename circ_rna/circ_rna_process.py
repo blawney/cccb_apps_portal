@@ -29,11 +29,9 @@ CALLBACK_URL = 'analysis/notify/'
 
 def handle(project, request):
 
-	print request.POST
 	sample_pk = int(request.POST.get('samplePK', ''))
 	sample = Sample.objects.get(pk = sample_pk)
 	has_error = bool(int(request.POST.get('has_error', '')))
-	print has_error
 	if has_error:
 		# notify CCCB
 		print 'Error with circRNA worker'
@@ -129,6 +127,7 @@ def prepare(project_pk, config_params):
     base_kwargs['dataset_name'] = re.sub('[\s-]+', '_', project.name)
     base_kwargs['read_length_script'] = os.path.join(base_kwargs['scripts_bucket'], config_params['read_length_script'])
     base_kwargs['read_samples'] = config_params['read_samples']
+    base_kwargs['knife_resource_bucket'] = config_params['knife_resource_bucket']
 
     for sample_tuple, ds_list in final_mapping.items():
         file_list = sorted([settings.GOOGLE_BUCKET_PREFIX + os.path.join(bucket_name, ds.filepath) for ds in ds_list])
