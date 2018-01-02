@@ -29,9 +29,11 @@ CALLBACK_URL = 'analysis/notify/'
 
 def handle(project, request):
 
+	print request.POST
 	sample_pk = int(request.POST.get('samplePK', ''))
 	sample = Sample.objects.get(pk = sample_pk)
-	has_error = bool(request.POST.get('has_error', ''))
+	has_error = bool(int(request.POST.get('has_error', '')))
+	print has_error
 	if has_error:
 		# notify CCCB
 		print 'Error with circRNA worker'
