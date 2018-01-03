@@ -69,7 +69,7 @@ if [ "$fq2_path" != "-" ]
     gsutil cp $fq2_path $fastq_dir/
 fi
 
-local_fq1=$fastq_dir"/"$(basname $fq1_path)
+local_fq1=$fastq_dir"/"$(basename $fq1_path)
 
 OVERLAP=$(python /srv/software/$read_length_script_path $local_fq1 $fq2_path $read_samples)
 
