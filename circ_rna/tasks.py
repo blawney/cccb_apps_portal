@@ -69,10 +69,15 @@ def make_figures(sample, concatenated_prob_df, gtf_filepath, output_dir, count_t
 	plots.plot_circ_rna(junctions, reads_file, gtf_filepath, output_dir)
 
 
-def get_gtf(storage_client, project, knife_resource_bucket):
+def get_gtf(storage_client, project, knife_resource_bucket, local_dir):
 	reference_genome = project.reference_organism.reference_genome
 	bucket = storage_client.get_bucket(knife_resource_bucket)
-	all_contents = bucket.list_blobs()
+	filename = '%s/%s_genes.gtf' % (reference_genome, reference_genome)
+	local_path = os.path.join(local_dir, os.path.basename(filename))
+	gtf_obj = bucket.get_blob(filename)
+	gtf_obj.download_to_file(local_path)
+	return local_path
+	
 
 @task(name='finish_circ_rna_process')
 def finish_circ_rna_process(project_pk):
@@ -108,7 +113,7 @@ def finish_circ_rna_process(project_pk):
 	get_files(all_contents, local_dir, is_paired)
 
 	# download the proper GTF file for this project:
-	gtf_filepath = get_gtf(project)
+	gtf_filepath = get_gtf(storage_client, project, config_params['knife_resource_bucket'], local_dir)
 
 	concatenated_prob_file = os.path.join(result_dir, config_params['concatenated_probability_file'])
 	concatenated_df = concatenate_circ_junction_reports(all_samples, local_dir, concatenated_prob_file, is_paired)
@@ -125,7 +130,7 @@ def finish_circ_rna_process(project_pk):
 			else:
 				print ex.message
 				raise ex 
-		make_figures(s, concatenated_df, gtf_filepath, output_dir, count_threshold, cdf_threshold)
+		make_figures(s, concatenated_df, gtf_filepath, sample_dir, count_threshold, cdf_threshold)
 
 
 
