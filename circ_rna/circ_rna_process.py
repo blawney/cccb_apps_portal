@@ -36,7 +36,8 @@ def handle(project, request):
 		# notify CCCB
 		print 'Error with circRNA worker'
 		email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), \
-				"There was a problem with the circRNA worker for sample %s" % sample.name, settings.CCCB_EMAIL_CSV, '[CCCB] Problem with circRNA worker')
+				"There was a problem with the circRNA worker for sample %s" % sample.name, \
+				settings.CCCB_EMAIL_CSV.split(','), '[CCCB] Problem with circRNA worker')
 	else:
 		sample.processed = True
 		sample.save()
@@ -129,9 +130,11 @@ def prepare(project_pk, config_params):
     base_kwargs['read_samples'] = config_params['read_samples']
     base_kwargs['knife_resource_bucket'] = config_params['knife_resource_bucket']
 
+    worker_num = 0
     for sample_tuple, ds_list in final_mapping.items():
         file_list = sorted([settings.GOOGLE_BUCKET_PREFIX + os.path.join(bucket_name, ds.filepath) for ds in ds_list])
         kwargs = base_kwargs.copy()
+        kwargs['worker_num'] = worker_num
         kwargs['sample_pk'] = sample_tuple[0]
         kwargs['result_bucket'] = os.path.join(result_bucket, sample_tuple[1])
         kwargs['r1_fastq'] = file_list[0]
@@ -139,9 +142,9 @@ def prepare(project_pk, config_params):
         # if paired
         if len(file_list) == 2:
             kwargs['r2_fastq'] = file_list[1]		
-		
+        print 'Submit task for kwargs: %s' % kwargs
         tasks.launch_circ_rna_worker.delay(kwargs)
-
+        worker_num += 1
 
 def start_analysis(project_pk):
     config_file = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'config.cfg')

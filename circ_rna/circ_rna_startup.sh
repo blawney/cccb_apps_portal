@@ -61,7 +61,7 @@ docker pull $DOCKER_IMAGE && \
 		/creds/$CREDENTIAL_JSON_BASENAME \
 		$READ_LENGTH_SCRIPT \
 		$READ_SAMPLES \
-		$KNIFE_RESOURCE_BUCKET
+		$KNIFE_RESOURCE_BUCKET \
 		/fastq_files \
 		complete \
 		/knife_output \

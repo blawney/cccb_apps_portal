@@ -19,6 +19,9 @@ from celery.decorators import task
 
 from . import plots
 
+LINK_ROOT = settings.PUBLIC_STORAGE_ROOT + '%s/%s'
+
+
 def get_files(all_cloud_files, local_dir, is_paired=True):
 	"""
 	Download the files locally
@@ -78,6 +81,18 @@ def get_gtf(storage_client, project, knife_resource_bucket, local_dir):
 	gtf_obj.download_to_file(local_path)
 	return local_path
 	
+def write_completion_message(project):
+    message_html = """\
+    <html>
+      <head></head>
+      <body>
+          <p>
+            Your circRNA analysis (%s) is complete!  Log-in to the CCCB application site to view and download your results.
+          </p>
+      </body>
+    </html>
+    """ % project.name
+    return message_html
 
 @task(name='finish_circ_rna_process')
 def finish_circ_rna_process(project_pk):
@@ -118,8 +133,23 @@ def finish_circ_rna_process(project_pk):
 	concatenated_prob_file = os.path.join(result_dir, config_params['concatenated_probability_file'])
 	concatenated_df = concatenate_circ_junction_reports(all_samples, local_dir, concatenated_prob_file, is_paired)
 
+	# upload the concatenated file:
+	destination = os.path.join(config_params['output_bucket'], os.path.basename(concatenated_prob_file))
+	cpf_blob = bucket.blob(destination)
+	cpf_blob.upload_from_filename(concatenated_prob_file)
+	acl = cpf_blob.acl
+	entity = acl.user(project.owner.email)
+	entity.grant_read()
+	acl.save()
+
+	public_link = LINK_ROOT % (bucket.name, cpf_blob.name)
+	r = Resource(project=project, basename = os.path.basename(concatenated_prob_file), public_link = public_link, resource_type = 'circRNA quantification')
+	r.save()
+
+	# make directories for each sample to hold figures:
 	count_threshold = int(config_params['count_threshold'])
 	cdf_threshold = float(config_params['cdf_threshold'])
+	all_sample_dirs = []
 	for s in all_samples:
 		sample_dir = os.path.join(result_dir, s.name)
 		try:
@@ -131,16 +161,55 @@ def finish_circ_rna_process(project_pk):
 				print ex.message
 				raise ex 
 		make_figures(s, concatenated_df, gtf_filepath, sample_dir, count_threshold, cdf_threshold)
+		all_sample_dirs.append(sample_dir)
 
+	# zip up the figures:
+	zipfile = os.path.join(local_dir, 'circ_rna_figures.zip') 
+	zip_cmd = 'zip -r %s %s' % (zipfile, ' '.join(all_sample_dirs))
+	print 'zip up using command: %s' % zip_cmd
+	p = subprocess.Popen(zip_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	stdout, sterr = p.communicate()
+	if p.returncode != 0:
+		#TODO: send email to cccb?  Shouldn't happen and not a user error.
+		pass
 
+	# upload the archive and give it permissions:
+	destination = os.path.join(config_params['output_bucket'], os.path.basename(zipfile))
+	zip_blob = bucket.blob(destination)
+	zip_blob.upload_from_filename(zipfile)
+	acl = zip_blob.acl
+	entity = acl.user(project.owner.email)
+	entity.grant_read()
+	acl.save()
+
+	# change the metadata so the download does not append the path 
+	set_meta_cmd = 'gsutil setmeta -h "Content-Disposition: attachment; filename=%s" gs://%s/%s' % (os.path.basename(zipfile), bucket_name, destination)
+	process = subprocess.Popen(set_meta_cmd, shell = True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+	stdout, stderr = process.communicate()
+	if process.returncode != 0:
+		print 'There was an error while setting the metadata on the zipped archive with gsutil.  Check the logs.  STDERR was:%s' % stderr
+		raise Exception('Error during gsutil upload module.')
+
+	shutil.rmtree(local_dir)
+
+	# register the zip archive with the download app
+	public_link = LINK_ROOT % (bucket.name, zip_blob.name)
+	r = Resource(project=project, basename = os.path.basename(zipfile), public_link = public_link, resource_type = 'Figures')
+	r.save()
+
+	# notify the client
+	# the second arg is supposedd to be a list of emails
+	print 'send notification email'
+	message_html = write_completion_message(project)
+	email_utils.send_email(os.path.join(settings.BASE_DIR, settings.GMAIL_CREDENTIALS), message_html, [project.owner.email,], '[CCCB] Your circRNA analysis has completed')	
 
 @task(name='launch_circ_rna_worker')
 def launch_circ_rna_worker(param_dict):
 
     compute = googleapiclient.discovery.build('compute', 'v1')
     
-    instance_name = 'circ-rna-worker-%s' % datetime.datetime.now().strftime('%m%d%y%H%M%S')
-
+    instance_name = 'circ-rna-worker-%s-%s' % (datetime.datetime.now().strftime('%m%d%y%H%M%S'), param_dict['worker_num'])
+    print 'Launch worker with name %s' % instance_name
     google_project = settings.GOOGLE_PROJECT
     machine_type = "zones/%s/machineTypes/%s" % (settings.GOOGLE_DEFAULT_ZONE, param_dict['machine_type']) 
 
