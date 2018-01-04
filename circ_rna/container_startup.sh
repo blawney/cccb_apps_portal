@@ -79,7 +79,7 @@ cd /srv/software/knife/circularRNApipeline_Standalone && \
 mkdir index && \
 cd index
 
-gsutil cp $knife_resource_buckets/$genome/$genome_*bt2 .
+gsutil cp $knife_resource_bucket/$genome/$genome_*bt2 .
 gsutil cp $knife_resource_bucket/$genome/$genome_*bt2l .
 gsutil cp $knife_resource_bucket/$genome/$genome_*fa .
 
