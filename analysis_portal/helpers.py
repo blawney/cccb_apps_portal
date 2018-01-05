@@ -15,6 +15,8 @@ def get_paired_or_single_status(project_pk):
 	Given project primary key (int), check if all samples are 
 	paired or single-end protocol.  Return True if paired, False is single
 	"""
+	project = Project.objects.get(pk=project_pk)
+
 	datasources = project.datasource_set.all()
 	all_samples = project.sample_set.all()
 	

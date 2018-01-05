@@ -2,15 +2,18 @@ import googleapiclient.discovery
 from google.cloud import storage
 import os
 import sys
+import shutil
 import glob
 import re
 import datetime
+import subprocess 
 
 import pandas as pd
 
 sys.path.append(os.path.abspath('..'))
 import email_utils
 from client_setup.models import Project, Sample
+from download.models import Resource
 from cccb_portal.config_parser import parse_config as config_parser
 from analysis_portal import helpers
 from django.conf import settings
@@ -57,9 +60,9 @@ def concatenate_circ_junction_reports(samples, local_dir, outfile, is_paired):
 
 
 def make_figures(sample, concatenated_prob_df, gtf_filepath, output_dir, count_threshold = 10, cdf_threshold = 0.9):
-	reads_files = glob.glob(os.path.join(output_dir, os.pardir, '%s*__output.txt' % sample.name))
+	reads_files = glob.glob(os.path.join(output_dir, os.pardir, os.pardir, '%s*__output.txt' % sample.name))
 	if len(reads_files) == 1:
-		reads_file = reads_files[0]
+		reads_file = os.path.realpath(reads_files[0])
 	else:
 		raise Exception('More than one reads file found for sample %s' % sample.name)
 
@@ -74,11 +77,12 @@ def make_figures(sample, concatenated_prob_df, gtf_filepath, output_dir, count_t
 
 def get_gtf(storage_client, project, knife_resource_bucket, local_dir):
 	reference_genome = project.reference_organism.reference_genome
-	bucket = storage_client.get_bucket(knife_resource_bucket)
+	bucket = storage_client.get_bucket(knife_resource_bucket[len(settings.GOOGLE_BUCKET_PREFIX):])
 	filename = '%s/%s_genes.gtf' % (reference_genome, reference_genome)
+	print 'filename for gtf: %s' % filename
 	local_path = os.path.join(local_dir, os.path.basename(filename))
 	gtf_obj = bucket.get_blob(filename)
-	gtf_obj.download_to_file(local_path)
+	gtf_obj.download_to_filename(local_path)
 	return local_path
 	
 def write_completion_message(project):
@@ -121,7 +125,7 @@ def finish_circ_rna_process(project_pk):
 			print ex.message
 			raise ex 
 
-	is_paired = get_paired_or_single_status(project_pk)
+	is_paired = helpers.get_paired_or_single_status(project_pk)
 	all_samples = project.sample_set.all()
 
 	# download the files to work on:
@@ -183,11 +187,13 @@ def finish_circ_rna_process(project_pk):
 	acl.save()
 
 	# change the metadata so the download does not append the path 
-	set_meta_cmd = 'gsutil setmeta -h "Content-Disposition: attachment; filename=%s" gs://%s/%s' % (os.path.basename(zipfile), bucket_name, destination)
+	set_meta_cmd = '%s setmeta -h "Content-Disposition: attachment; filename=%s" gs://%s/%s' % (settings.GSUTIL_PATH, os.path.basename(zipfile), bucket_name, destination)
+	print 'Issue metadata command: %s' % set_meta_cmd
 	process = subprocess.Popen(set_meta_cmd, shell = True, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 	stdout, stderr = process.communicate()
 	if process.returncode != 0:
 		print 'There was an error while setting the metadata on the zipped archive with gsutil.  Check the logs.  STDERR was:%s' % stderr
+		print 'STDOUT was %s' % stdout
 		raise Exception('Error during gsutil upload module.')
 
 	shutil.rmtree(local_dir)

@@ -2,6 +2,7 @@ import matplotlib as mpl
 mpl.use('Agg')
 
 import sys
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -550,7 +551,8 @@ def make_plot(reads, ordered_exons, junction_to_exons_map, primary_junction_id, 
 	ax.set_yticks([])
 	ax.autoscale_view()
 	plt.axis('equal')
-	fig.savefig('%s/%s.png' % (output_directory, j), bbox_inches='tight')
+	fig.savefig('%s/%s.png' % (output_directory, primary_junction_id), bbox_inches='tight')
+	plt.close()
 
 
 def plot_circ_rna(high_quality_junctions, reads_file, gtf_file, output_directory):
@@ -571,7 +573,7 @@ def plot_circ_rna(high_quality_junctions, reads_file, gtf_file, output_directory
 	gtf['gene'] = gtf['attributes'].apply(get_gene_from_gtf)
 	gtf = gtf.ix[gtf.feature == 'exon']
 
-	for j in high_quality_junctions['junction']:
+	for j in high_quality_junctions:
 
 		reads_subset = reads.ix[reads['junction'] == j]
 
