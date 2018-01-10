@@ -46,15 +46,28 @@ def get_files(all_cloud_files, local_dir, is_paired=True):
 def concatenate_circ_junction_reports(samples, local_dir, outfile, is_paired):
 	overall_df = pd.DataFrame()
 	for s in samples:
-		prob_files = glob.glob(os.path.join(local_dir, '%s*__circJuncProbs.txt' % s.name))
-		if len(prob_files) == 1:
-			temp_df = pd.read_table(prob_files[0], index_col=0)
-			temp_df = temp_df[['numReads', 'junction_cdf.x',]]
-			temp_df.columns = ['numReads_%s' % s.name, 'junctionCDF_%s' % s.name]
-			overall_df = pd.concat([overall_df, temp_df], axis=1)
-		else:
-			print 'More than one file matched!'
-			raise Exception('Error when concatenating junction reports')
+		if is_paired:
+			prob_files = glob.glob(os.path.join(local_dir, '%s*__circJuncProbs.txt' % s.name))
+			if len(prob_files) == 1:
+				temp_df = pd.read_table(prob_files[0], index_col=0)
+				temp_df = temp_df[['numReads', 'junction_cdf.x',]]
+				temp_df.columns = ['numReads_%s' % s.name, 'junctionCDF_%s' % s.name]
+				overall_df = pd.concat([overall_df, temp_df], axis=1)
+			else:
+				print 'More than one file matched!'
+				raise Exception('Error when concatenating junction reports')
+		else: # single end
+			prob_files = glob.glob(os.path.join(local_dir, '%s*_report.txt' % s.name))
+			if len(prob_files) == 1:
+				temp_df = pd.read_table(prob_files[0], skiprows=1, index_col=0)
+				temp_df = temp_df[['circ','pvalue']]
+				temp_df.columns = ['numReads_%s' % s.name,'junctionCDF_%s' % s.name]
+				non_reg_rows = temp_df.apply(lambda x: x.split('|')[-2] != 'reg', axis=1)
+				temp_df = temp_df.ix[non_reg_rows]
+				overall_df = pd.concat([overall_df, temp_df], axis=1)
+			else:
+				print 'More than one file matched for report in single-end circRNA run.'
+				raise Exception('Error when concatenating the single-end junction files')
 	overall_df.to_csv(outfile, sep='\t', index_label='junction_id')
 	return overall_df
 
