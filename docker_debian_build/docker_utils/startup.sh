@@ -3,6 +3,12 @@
 echo "working dir:"`pwd`
 
 # input args:
+# 1: dev or production
+# 2: a bucket path in google cloud storage 
+#  - gs://cccb-apps-resources if production or gs://cccb-apps-resources-dev if dev
+# 3: path to credential file in the docker container (a json file that was mounted from the host)
+# 4: (optional) a port to serve from instead of 80
+
 # determines whether production of dev.  Must match a section in the config file below
 export APP_STATUS=$1
 if [ $1 == "dev" ]; then
