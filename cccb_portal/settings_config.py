@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'variant_calling_from_bam',
     'google_drive',
     'pooled_crispr',
+    'circ_rna',
 ]
 
 MIDDLEWARE = [
@@ -168,6 +169,11 @@ SITE_ID = 1
 
 # the base of our address:
 development_port = os.getenv('DEVPORT')
+try:
+	development_port = int(development_port)
+except ValueError:
+	development_port = None
+
 if development_port is None:
 	HOST = '%s://%s' % (config_parser.get(environment, 'protocol'), config_parser.get(environment, 'domain'))
 else:
@@ -183,7 +189,8 @@ UPLOAD_PREFIX = 'uploads'
 CREDENTIAL_DIR = os.path.join(BASE_DIR, 'credentials')
 
 # json file with service account credentials
-svc_acct_filename = os.path.basename(config_parser.get(environment, 'service_account_credentials_json'))
+SERVICE_ACCOUNT_CREDENTIALS_CLOUD = config_parser.get(environment, 'service_account_credentials_json')
+svc_acct_filename = os.path.basename(SERVICE_ACCOUNT_CREDENTIALS_CLOUD)
 SERVICE_ACCOUNT_CREDENTIALS = os.path.join(CREDENTIAL_DIR, svc_acct_filename)
 
 # some settings related to authenticating with google (Oauth2 credentials):

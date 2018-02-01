@@ -19,6 +19,7 @@ from rnaseq import rnaseq_process
 from variant_calling_from_fastq import variant_process_submission_from_fastq
 from variant_calling_from_bam import variant_process_submission_from_bam
 from pooled_crispr import pooled_crispr_process
+from circ_rna import circ_rna_process
 
 import helpers
 
@@ -62,8 +63,9 @@ def set_genome(request, project_pk):
 	project = helpers.check_ownership(project_pk, request.user)
 	print 'back in set_genome, project=%s' % project
 	if project is not None:
+		service = project.service
 		selected_genome = request.POST.get('selected_genome')
-		org = Organism.objects.get(reference_genome = selected_genome)
+		org = Organism.objects.get(reference_genome = selected_genome, service=service)
 		project.reference_organism = org
 		project.save()
 		return HttpResponse('')
@@ -390,10 +392,18 @@ def kickoff(request, project_pk):
 				project.save()
 			elif project.service.name == 'variant_calling_from_bam':
 				variant_process_submission_from_bam.start_analysis(pk)
-                        elif project.service.name == 'variant_calling_from_fastq':
-                                variant_process_submission_from_fastq.start_analysis(pk)
-                        elif project.service.name == 'pooled_crispr':
+			elif project.service.name == 'variant_calling_from_fastq':
+				variant_process_submission_from_fastq.start_analysis(pk)
+			elif project.service.name == 'pooled_crispr':
 				pooled_crispr_process.start_analysis(pk)
+				project.in_progress = True
+				project.start_time = datetime.datetime.now()
+				project.status_message = 'Performing quantification'
+				project.next_action_text = 'Processing...'
+				project.next_action_url = ''
+				project.save()
+			elif project.service.name == 'circ_rna':
+				circ_rna_process.start_analysis(pk)
 				project.in_progress = True
 				project.start_time = datetime.datetime.now()
 				project.status_message = 'Performing quantification'

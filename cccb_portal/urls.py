@@ -40,5 +40,6 @@ urlpatterns = [
     url(r'^dbx-callback/', dropbox_utils.dropbox_callback),
     url(r'^dbx/', dropbox_utils.dropbox_auth),
     url(r'dropbox-transfer-complete', dropbox_utils.dropbox_transfer_complete),
-    url(r'^pooled-crispr/', include('pooled_crispr.urls'))
+    url(r'^pooled-crispr/', include('pooled_crispr.urls')),
+    url(r'^circ-rna/', include('circ_rna.urls')),
 ]

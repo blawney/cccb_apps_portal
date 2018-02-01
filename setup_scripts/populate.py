@@ -220,3 +220,56 @@ workflow_step.step_url = 'pooled_crispr_summary'
 workflow_step.save()
 
 ###################################### End Pooled CRISPR  ##############################################################
+
+
+###################################### Start circRNA ##############################################################
+
+svc = Service.objects.get_or_create(name='circ_rna')[0]
+svc.description = 'circRNA detection with KNIFE'
+svc.application_url = 'https://cccb-analysis.tm4.org'
+svc.save()
+
+# add the applicable organisms/genome builds:
+org = Organism.objects.get_or_create(reference_genome='hg19', service=svc)[0]
+org.description = 'Human (hg19)'
+org.save()
+
+org = Organism.objects.get_or_create(reference_genome='mm10', service=svc)[0]
+org.description = 'Mouse (mm10)'
+org.save()
+
+workflow_step = Workflow.objects.get_or_create(step_order=0, service=svc)[0]
+workflow_step.step_url = 'analysis_home_view'
+workflow_step.save()
+
+workflow_step = Workflow.objects.get_or_create(step_order=1, service=svc)[0]
+workflow_step.step_url = 'choose_genome'
+workflow_step.save()
+
+workflow_step = Workflow.objects.get_or_create(step_order=2, service=svc)[0]
+workflow_step.step_url = 'generic_upload'
+workflow_step.instructions = """<p>Manage your files here. Upload or remove your compressed, 
+	FASTQ-format files as necessary. In the next step, you can assign the files to 
+	particular samples.</p>  <p class="bolded">FastQ file upload:</p>  
+	<p>For naming your files, we enforce a particular naming convention which is followed 
+	by most sequencing providers. We also require files to be Gzip-compressed to save disk space; 
+	files will typically end with "gz" if that is the case.</p>  <p>If your sequencing is 
+	single-end protocol, we expect files named like [SAMPLE]_R1.fastq.gz, where [SAMPLE] is 
+	your sample's name.</p>  <p>For paired sequencing protocols there will be two files 
+	per sample, named [SAMPLE]_R1.fastq.gz and [SAMPLE]_R2.fastq.gz; note the only difference 
+	is "R2" to indicate the second of a read pairing.</p>"""
+extra = {}
+extra['sample_source_upload'] = True
+workflow_step.extra = json.dumps(extra)
+workflow_step.save()
+
+workflow_step = Workflow.objects.get_or_create(step_order=3, service=svc)[0]
+workflow_step.step_url = 'file_annotation'
+workflow_step.save()
+
+workflow_step = Workflow.objects.get_or_create(step_order=4, service=svc)[0]
+workflow_step.step_url = 'pre_analysis_summary'
+workflow_step.save()
+
+###################################### End circRNA ##############################################################
+

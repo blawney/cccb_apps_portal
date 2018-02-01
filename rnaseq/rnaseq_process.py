@@ -313,8 +313,8 @@ def handle(project, request):
         project.paused_for_user_input = True
         project.completed = True
         project.status_message = 'Completed alignments'
-	project.next_action_text = 'Perform differential expression'
-	project.next_action_url = reverse('dge', kwargs={'project_pk':project.pk})
-	project.has_downloads = True
+        project.next_action_text = 'Perform differential expression'
+        project.next_action_url = reverse('dge', kwargs={'project_pk':project.pk})
+        project.has_downloads = True
         project.save()
         tasks.finish_alignment_work.delay(project.pk)
