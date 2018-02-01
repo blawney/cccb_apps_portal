@@ -133,10 +133,10 @@ def launch_workers(compute, project, result_bucket_name, sample_mapping, config_
         kwargs['token'] = settings.TOKEN
         kwargs['enc_key'] = settings.ENCRYPTION_KEY
         instance_name = 'worker-%s-%s' % (sample_tuple[1].lower().replace('_','-'), datetime.datetime.now().strftime('%m%d%y%H%M%S'))
-        launch_custom_instance(compute, settings.GOOGLE_PROJECT, settings.GOOGLE_DEFAULT_ZONE, instance_name, kwargs, config_params)
+        launch_custom_instance(compute, settings.GOOGLE_PROJECT, settings.GOOGLE_DEFAULT_ZONE, instance_name, kwargs, config_params, project.service.name.lower())
 
 
-def launch_custom_instance(compute, google_project, zone, instance_name, kwargs, config_params):
+def launch_custom_instance(compute, google_project, zone, instance_name, kwargs, config_params, service_type):
 
     result_bucket_name = kwargs['result_bucket_name']
     sample_name = kwargs['sample_name']
@@ -163,7 +163,7 @@ def launch_custom_instance(compute, google_project, zone, instance_name, kwargs,
 
         'labels':[{
                     'ilab_id':kwargs['ilab_id'],
-                    'analysis_type':'rnaseq_dge',
+                    'service_type':service_type,
                    }
                  ],
         # Specify the boot disk and the image to use as a source.
