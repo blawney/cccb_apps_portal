@@ -162,8 +162,8 @@ def launch_custom_instance(compute, google_project, zone, instance_name, kwargs,
         'machineType': machine_type,
 
         'labels':[{
-                    'key':'ilab_id',
-                    'value':kwargs['ilab_id']
+                    'ilab_id':kwargs['ilab_id'],
+                    'analysis_type':'rnaseq_dge',
                    }
                  ],
         # Specify the boot disk and the image to use as a source.
