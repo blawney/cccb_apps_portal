@@ -72,8 +72,8 @@ WORKDIR ${appdir}
 
 # pull the app code:
 ENV PATH="${gcloud}:${PATH}"
-#RUN git clone https://github.com/blawney/cccb_apps_portal.git "${appdir}"
-RUN "${gcloud_bin}"/gcloud source repos clone cccb_apps "${appdir}"
+RUN git clone https://github.com/blawney/cccb_apps_portal.git "${appdir}"
+#RUN "${gcloud_bin}"/gcloud source repos clone cccb_apps "${appdir}"
 
 # a directory to hold the credentials for dropbox, drive, etc.
 ARG credentials_dir=${appdir}/credentials
