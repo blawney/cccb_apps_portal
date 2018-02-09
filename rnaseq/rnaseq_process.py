@@ -132,7 +132,7 @@ def launch_workers(compute, project, result_bucket_name, sample_mapping, config_
         kwargs['notification_email_addresses'] = settings.CCCB_EMAIL_CSV
         kwargs['token'] = settings.TOKEN
         kwargs['enc_key'] = settings.ENCRYPTION_KEY
-        instance_name = 'worker-%s-%s' % (sample_tuple[1].lower().replace('_','-'), datetime.datetime.now().strftime('%m%d%y%H%M%S'))
+        instance_name = 'worker-%s-%s' % (sample_tuple[1].lower().replace('_','-').replace('.','-'), datetime.datetime.now().strftime('%m%d%y%H%M%S'))
         launch_custom_instance(compute, settings.GOOGLE_PROJECT, settings.GOOGLE_DEFAULT_ZONE, instance_name, kwargs, config_params, project.service.name.lower())
 
 
