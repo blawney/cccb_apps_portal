@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+{% load static %}
+<html lane="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<!-- Bootstrap core CSS -->
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+		<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+		<link href="https://maxcdn.bootstrapcdn.com/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
+
+		<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+		<!--[if lt IE 9]>
+		<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+		<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+		<!-- Custom styles for this template -->
+		<!--<link rel="stylesheet" href="style.css">-->
+		<style>
+			samp{
+				white-space: pre;
+				display: block;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="row">
+				<h1>Enter regex for projects to remove:</h1>
+				<div class="form-group">
+					<label for="project-id-regex">Project/iLab ID</label>
+					<input type="text" class="form-control" id="project-id-regex" placeholder="Enter regex">
+					<small id="help" class="form-text text-muted">Note that this will NOT actually remove anything, so it's ok to make mistakes!</small>
+				</div>
+				<p>
+					<button class="btn btn-primary" id="go-find-projects">Find projects</button>
+				</p>
+			</div>
+			<div id="commands" class="row">
+				<samp id="command-block">Here is some code</samp>
+			</div>
+		</div>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+		<!-- Latest compiled and minified JavaScript -->
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/holder/2.9.4/holder.min.js"></script>
+		<script src="{% static "js/common.js" %}"></script>
+		<script>
+
+			showResults = function(jsonResponse){
+				var all_cmds = "";
+				var commands = jsonResponse["commands"];
+				for (var i in commands){
+					all_cmds += commands[i] + "\n";
+				}
+				$("#command-block").text(all_cmds);
+			}
+
+			$("#go-find-projects").click(function(){
+				var regex = $("#project-id-regex").val();
+				console.log(regex);
+				
+				var csrftoken = getCookie('csrftoken');
+
+				xhr = new XMLHttpRequest();
+				xhr.open("POST", "/cleanup/query-projects/");
+				xhr.setRequestHeader("X-CSRFToken", csrftoken);
+				xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+				xhr.onreadystatechange = function() {
+					if (xhr.readyState === 4) {
+						if (xhr.status === 200) {
+							var jsonResponse = JSON.parse(xhr.responseText);
+							console.log('Response!!!:' + jsonResponse);
+							showResults(jsonResponse);
+						}
+					}
+				}
+				xhr.send("project_id_regex=" + regex);
+
+			});
+		</script>
+	</body>
+</html>
