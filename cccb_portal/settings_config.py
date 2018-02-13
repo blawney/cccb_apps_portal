@@ -173,6 +173,8 @@ try:
 	development_port = int(development_port)
 except ValueError:
 	development_port = None
+except TypeError:
+	development_port = None
 
 if development_port is None:
 	HOST = '%s://%s' % (config_parser.get(environment, 'protocol'), config_parser.get(environment, 'domain'))
