@@ -1,0 +1,29 @@
+<table class="table">
+<thead>
+	<tr>
+		<th>iLab ID</td>
+		<th>Owner</td>
+		<th>Bucket</td>
+	</tr>		
+</thead>
+<tbody>
+{% if results|length > 0 %}
+{% for item in results %}
+	<tr>
+		<td>{{item.ilab_id}}</td>
+		<td>{{item.owner}}</td>
+		<td>{{item.bucket}}</td>
+	</tr>	
+{% endfor %}
+{% else %}
+<div class="alert alert-warning" role="alert">
+  No results found
+</div>
+{% endif %}
+
+</tbody>
+</table>
+
+{% if results|length > 0 %}
+	<button id="rm-projects" type="button" class="btn btn-danger">Remove these projects and storage buckets!</button>
+{% endif %}

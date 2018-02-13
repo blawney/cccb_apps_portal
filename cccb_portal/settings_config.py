@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'google_drive',
     'pooled_crispr',
     'circ_rna',
+    'cleanup',
 ]
 
 MIDDLEWARE = [
