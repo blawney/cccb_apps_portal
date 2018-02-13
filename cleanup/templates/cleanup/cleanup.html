@@ -44,8 +44,7 @@
 					<button class="btn btn-primary" id="go-find-projects">Find projects</button>
 				</p>
 			</div>
-			<div id="commands" class="row">
-				<samp id="command-block">Here is some code</samp>
+			<div id="result-block"></div>
 			</div>
 		</div>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
@@ -54,19 +53,15 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/holder/2.9.4/holder.min.js"></script>
 		<script src="{% static "js/common.js" %}"></script>
 		<script>
-
-			showResults = function(jsonResponse){
-				var all_cmds = "";
-				var commands = jsonResponse["commands"];
-				for (var i in commands){
-					all_cmds += commands[i] + "\n";
+			$("#project-id-regex").keypress(function (e) {
+				if (e.which == 13) {
+					$("#go-find-projects").trigger('click');
+					return false;
 				}
-				$("#command-block").text(all_cmds);
-			}
+			});
 
 			$("#go-find-projects").click(function(){
 				var regex = $("#project-id-regex").val();
-				console.log(regex);
 				
 				var csrftoken = getCookie('csrftoken');
 
@@ -77,14 +72,30 @@
 				xhr.onreadystatechange = function() {
 					if (xhr.readyState === 4) {
 						if (xhr.status === 200) {
-							var jsonResponse = JSON.parse(xhr.responseText);
-							console.log('Response!!!:' + jsonResponse);
-							showResults(jsonResponse);
+							$("#result-block").html(xhr.response);
 						}
 					}
 				}
 				xhr.send("project_id_regex=" + regex);
 
+			});
+
+			$(document).on("click", '#rm-projects', function(event) { 
+				var csrftoken = getCookie('csrftoken');
+
+				xhr = new XMLHttpRequest();
+				xhr.open("POST", "/cleanup/rm-projects/");
+				xhr.setRequestHeader("X-CSRFToken", csrftoken);
+				xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+				xhr.onreadystatechange = function() {
+					if (xhr.readyState === 4) {
+						if (xhr.status === 200) {
+							$("#result-block").html(xhr.response);
+						}
+					}
+				}
+				xhr.send();
+			    
 			});
 		</script>
 	</body>
