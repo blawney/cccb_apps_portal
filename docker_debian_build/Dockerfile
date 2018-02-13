@@ -106,6 +106,7 @@ RUN Rscript /startup/install_R_packages.R \
   && R CMD INSTALL r_packages/cccbDGEpipeline_0.1.0.tar.gz
 
 ENV APP_ROOT=${appdir}
+ENV PYTHONUNBUFFERED=TRUE
 
 # run the startup script which injects some parameters and starts the app server:
 ENTRYPOINT ["/startup/startup.sh"]
