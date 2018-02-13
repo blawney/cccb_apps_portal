@@ -21,6 +21,8 @@ count_data=read.table(RAW_COUNT_MATRIX, header=T, sep="\t")
 rownames(count_data)=count_data$Gene
 count_data=count_data[-1]
 annotations=read.table(SAMPLE_ANNOTATION_FILE, header=T, sep="\t", stringsAsFactors=F)
+annotations$Sample_ID = make.names(annotations$Sample_ID)
+write.table(annotations, SAMPLE_ANNOTATION_FILE, sep='\t', quote=F, row.names=F)
 threshold=list(pvalue=PVAL_THRESHOLD, log2fc=LOG2FC_THRESHOLD)
 # END INPUTS
 
